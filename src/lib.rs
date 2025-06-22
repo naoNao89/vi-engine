@@ -289,8 +289,6 @@ pub use memory_profiling::{
     MemoryProfiler, MemoryProfilerUtils, MemoryStats, ScopedMemoryProfiler,
 };
 
-
-
 /// Performance-optimized character cleaning for benchmarking
 /// WARNING: Bypasses safety checks - only use for performance testing!
 #[cfg(any(test, feature = "unsafe_performance"))]

@@ -1,24 +1,27 @@
-use vi::{get_assembly_info, is_assembly_available, asm_clean_char, clean_char, initialize_assembly_safety};
+use std::time::Instant;
 #[cfg(feature = "unsafe_performance")]
 use vi::asm_clean_char_unsafe;
-use std::time::Instant;
+use vi::{
+    asm_clean_char, clean_char, get_assembly_info, initialize_assembly_safety,
+    is_assembly_available,
+};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("=== Assembly Debug Information ===");
-    
+
     // Initialize assembly safety
     initialize_assembly_safety()?;
-    
+
     // Check assembly availability
     println!("Assembly available: {}", is_assembly_available());
     println!("Assembly info: {}", get_assembly_info());
-    
+
     // Test single character performance
     let test_char = 'ế';
     let iterations = 10000;
-    
+
     println!("\n=== Performance Comparison ===");
-    
+
     // Rust implementation
     let start = Instant::now();
     for _ in 0..iterations {
@@ -26,9 +29,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let rust_duration = start.elapsed();
     let rust_ns_per_char = rust_duration.as_nanos() as f64 / iterations as f64;
-    
+
     println!("Rust: {:.2} ns/char", rust_ns_per_char);
-    
+
     // Assembly implementation with safety (if available)
     if is_assembly_available() {
         let start = Instant::now();
@@ -45,8 +48,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let assembly_duration = start.elapsed();
 
         if successful_calls > 0 {
-            let assembly_ns_per_char = assembly_duration.as_nanos() as f64 / successful_calls as f64;
-            println!("Assembly (safe): {:.2} ns/char ({} successful calls)", assembly_ns_per_char, successful_calls);
+            let assembly_ns_per_char =
+                assembly_duration.as_nanos() as f64 / successful_calls as f64;
+            println!(
+                "Assembly (safe): {:.2} ns/char ({} successful calls)",
+                assembly_ns_per_char, successful_calls
+            );
 
             let speedup = rust_ns_per_char / assembly_ns_per_char;
             println!("Safe speedup: {:.2}x", speedup);
@@ -96,21 +103,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         println!("❌ Assembly not available - using Rust fallback");
     }
-    
+
     // Test correctness
     println!("\n=== Correctness Test ===");
     let test_chars = ['ế', 'à', 'ộ', 'ư', 'đ', 'a', 'b', 'c'];
-    
+
     for &ch in &test_chars {
         let rust_result = clean_char(ch);
-        
+
         if is_assembly_available() {
             match asm_clean_char(ch) {
                 Ok(assembly_result) => {
                     if rust_result == assembly_result {
                         println!("✅ '{}' -> '{}' (consistent)", ch, rust_result);
                     } else {
-                        println!("❌ '{}' -> Rust: '{}', Assembly: '{}'", ch, rust_result, assembly_result);
+                        println!(
+                            "❌ '{}' -> Rust: '{}', Assembly: '{}'",
+                            ch, rust_result, assembly_result
+                        );
                     }
                 }
                 Err(e) => {
@@ -121,6 +131,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("✅ '{}' -> '{}' (Rust only)", ch, rust_result);
         }
     }
-    
+
     Ok(())
 }

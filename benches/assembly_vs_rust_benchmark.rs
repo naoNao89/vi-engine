@@ -1,6 +1,9 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use std::hint::black_box;
-use vi::{clean_char, clean_string, initialize_assembly_safety, SafeAssemblyProcessor, is_assembly_available, asm_clean_char_unsafe, asm_clean_string_unsafe};
+use vi::{
+    asm_clean_char_unsafe, asm_clean_string_unsafe, clean_char, clean_string,
+    initialize_assembly_safety, is_assembly_available, SafeAssemblyProcessor,
+};
 
 /// Performance-optimized benchmark without safety overhead
 fn performance_optimized_benchmark(c: &mut Criterion) {

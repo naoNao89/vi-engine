@@ -223,7 +223,10 @@ fn test_performance_regression() -> Result<(), Box<dyn std::error::Error>> {
 
         // Ideally assembly should be faster than Rust, but allow for test environment variance
         if speedup >= 1.0 {
-            println!("✅ Assembly implementation is faster than Rust: {:.2}x speedup", speedup);
+            println!(
+                "✅ Assembly implementation is faster than Rust: {:.2}x speedup",
+                speedup
+            );
         } else {
             println!("⚠️  Assembly implementation is slower than Rust: {:.2}x speedup (may be due to test environment)", speedup);
         }

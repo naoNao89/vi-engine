@@ -320,7 +320,6 @@ fn compile_aarch64_assembly() {
 }
 
 fn compile_generic_aarch64_assembly(generic_asm_file: &str, is_cross_compile: bool) {
-
     // Compile generic ARM64 assembly (works on all ARM64 platforms)
     // Temporarily disabled due to assembly syntax issues on macOS
     #[allow(clippy::overly_complex_bool_expr)]
@@ -356,7 +355,6 @@ fn compile_generic_aarch64_assembly(generic_asm_file: &str, is_cross_compile: bo
 }
 
 fn compile_standard_aarch64_assembly(asm_file: &str, is_cross_compile: bool) {
-
     // Compile standard ARM64 assembly
     if Path::new(asm_file).exists() {
         println!("cargo:rerun-if-changed={asm_file}");
@@ -382,15 +380,12 @@ fn compile_standard_aarch64_assembly(asm_file: &str, is_cross_compile: bool) {
             println!("cargo:warning=Compiled aarch64 assembly kernels for maximum performance");
         }
     } else {
-        println!(
-            "cargo:warning=aarch64 assembly file not found: {asm_file}"
-        );
+        println!("cargo:warning=aarch64 assembly file not found: {asm_file}");
         println!("cargo:rustc-cfg=feature=\"no_assembly\"");
     }
 }
 
 fn compile_optimized_aarch64_assembly(optimized_asm_file: &str, is_cross_compile: bool) {
-
     // Compile optimized assembly (enhanced SIMD implementation)
     if Path::new(optimized_asm_file).exists() {
         println!("cargo:rerun-if-changed={optimized_asm_file}");
@@ -418,8 +413,11 @@ fn compile_optimized_aarch64_assembly(optimized_asm_file: &str, is_cross_compile
     }
 }
 
-fn compile_apple_silicon_assembly(apple_silicon_asm_file: &str, is_apple_silicon: bool, is_cross_compile: bool) {
-
+fn compile_apple_silicon_assembly(
+    apple_silicon_asm_file: &str,
+    is_apple_silicon: bool,
+    is_cross_compile: bool,
+) {
     // Compile Apple Silicon optimized assembly (macOS ARM64 only, not for cross-compilation)
     if is_apple_silicon && !is_cross_compile && Path::new(apple_silicon_asm_file).exists() {
         println!("cargo:rerun-if-changed={apple_silicon_asm_file}");

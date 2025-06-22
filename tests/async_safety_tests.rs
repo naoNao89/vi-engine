@@ -373,19 +373,29 @@ async fn test_async_metrics_collection() {
     let metrics = processor.get_metrics();
 
     // Debug output to see what's happening
-    let started = metrics.operations_started.load(std::sync::atomic::Ordering::Relaxed);
-    let completed = metrics.operations_completed.load(std::sync::atomic::Ordering::Relaxed);
-    println!("Debug: operations_started={}, operations_completed={}, successful_operations={}",
-             started, completed, successful_operations);
+    let started = metrics
+        .operations_started
+        .load(std::sync::atomic::Ordering::Relaxed);
+    let completed = metrics
+        .operations_completed
+        .load(std::sync::atomic::Ordering::Relaxed);
+    println!(
+        "Debug: operations_started={}, operations_completed={}, successful_operations={}",
+        started, completed, successful_operations
+    );
 
     // Should have recorded operations (at least the attempts)
     if successful_operations > 0 {
         assert!(
             started >= successful_operations as u64,
             "Expected at least {} operations started, got {}",
-            successful_operations, started
+            successful_operations,
+            started
         );
-        assert!(metrics.get_success_rate() >= 0.0, "Success rate should be non-negative");
+        assert!(
+            metrics.get_success_rate() >= 0.0,
+            "Success rate should be non-negative"
+        );
     } else {
         println!("All operations were cancelled - metrics test skipped");
     }

@@ -424,7 +424,10 @@ impl AssemblyWatchdog {
                 log::debug!("Assembly watchdog thread stopped");
             })
             .unwrap_or_else(|e| {
-                log::warn!("Failed to spawn watchdog thread: {}. Continuing without watchdog.", e);
+                log::warn!(
+                    "Failed to spawn watchdog thread: {}. Continuing without watchdog.",
+                    e
+                );
                 // Return a dummy handle that immediately finishes
                 thread::spawn(|| {})
             })
@@ -459,7 +462,10 @@ impl Drop for AssemblyWatchdog {
 /// This should be called once at program startup
 pub fn initialize_assembly_safety() -> Result<(), Box<dyn std::error::Error>> {
     // Ensure initialization only happens once
-    if SAFETY_INITIALIZED.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_err() {
+    if SAFETY_INITIALIZED
+        .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+        .is_err()
+    {
         // Already initialized
         return Ok(());
     }
@@ -530,7 +536,10 @@ fn setup_signal_handling() -> Result<(), Box<dyn std::error::Error>> {
         }) {
         Ok(_) => Ok(()),
         Err(e) => {
-            log::warn!("Failed to spawn signal handler thread: {}. Signal handling disabled.", e);
+            log::warn!(
+                "Failed to spawn signal handler thread: {}. Signal handling disabled.",
+                e
+            );
             Ok(()) // Don't fail initialization if signal handling can't be set up
         }
     }

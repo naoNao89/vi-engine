@@ -39,7 +39,7 @@ pub enum CpuArchitecture {
     /// Other architectures with basic support
     Other {
         /// Name of the architecture
-        arch_name: String
+        arch_name: String,
     },
 }
 
