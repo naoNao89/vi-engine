@@ -1,0 +1,187 @@
+[package]
+name = "vi"
+version = "0.5.0"
+authors = ["Naonao89 <contact.amniotic151@passinbox.com>"]
+edition = "2021"
+rust-version = "1.70.0"
+description = "High-performance Vietnamese Input Method Engine with assembly-optimized kernels and comprehensive safety guarantees"
+readme = "README.md"
+
+homepage = "https://github.com/Naonao89/vi-engine/"
+repository = "https://github.com/Naonao89/vi-engine.git"
+license-file = "LICENSE"
+
+keywords = ["vietnamese", "ime", "text-processing", "performance", "assembly"]
+categories = ["text-processing", "internationalization", "algorithms"]
+
+# Additional metadata for better discoverability
+include = [
+    "src/**/*",
+    "examples/**/*",
+    "benches/**/*",
+    "tests/**/*",
+    "docs/**/*",
+    "scripts/**/*",
+    "build.rs",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "DEVELOPMENT.md",
+    "TECHNICAL_STATUS.md"
+]
+exclude = [
+    "target/**/*",
+    "testdata/**/*",
+    ".git/**/*",
+    "*.tmp",
+    "*.bak"
+]
+
+[features]
+default = ["auto_assembly"]
+# Assembly optimization features
+auto_assembly = []  # Automatically enable appropriate assembly for current platform
+apple_silicon_assembly = []
+aarch64_assembly = []
+x86_64_assembly = []
+no_assembly = []
+# Async support
+async = ["tokio", "tokio-util", "futures", "async-trait"]
+# Memory profiling support
+memory_profiling = []
+# Unsafe performance functions for benchmarking
+unsafe_performance = []
+
+
+
+[dependencies]
+phf = { version = "0.11", features = ["macros"] }
+nom = "8.0"
+log = "0.4"
+smallvec = "1.13"
+memmap2 = "0.9"
+libc = "0.2"
+# Assembly safety dependencies
+signal-hook = "0.3"
+crossbeam = "0.8"
+parking_lot = "0.12"
+once_cell = "1.19"
+# Async dependencies (optional)
+tokio = { version = "1.0", features = ["rt", "rt-multi-thread", "time", "sync", "macros"], optional = true }
+tokio-util = { version = "0.7", optional = true }
+futures = { version = "0.3", optional = true }
+async-trait = { version = "0.1", optional = true }
+
+[dev-dependencies]
+insta = { version = "1.43", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+criterion = "0.6"
+rustyline = "16"
+
+# Linting and code quality
+[lints.rust]
+# Note: unsafe_code is allowed for assembly integration
+missing_docs = "warn"
+unused_imports = "warn"
+unused_variables = "warn"
+dead_code = "warn"
+unreachable_code = "warn"
+unused_must_use = "warn"
+
+[lints.clippy]
+# Correctness lints (deny level) - highest priority
+correctness = { level = "deny", priority = -1 }
+suspicious = { level = "deny", priority = -1 }
+
+# Style lints (warn level) - lower priority
+style = { level = "warn", priority = -1 }
+complexity = { level = "warn", priority = -1 }
+perf = { level = "warn", priority = -1 }
+
+# Pedantic lints for highest quality - lower priority
+pedantic = { level = "warn", priority = -1 }
+
+# Specific important lints - override groups
+missing_docs_in_private_items = "allow"  # Too noisy for internal code
+module_name_repetitions = "allow"       # Common in domain-specific code
+similar_names = "allow"                 # Allow similar variable names
+too_many_lines = "warn"
+cognitive_complexity = "warn"
+
+# Security-focused lints
+panic = "warn"
+unwrap_used = "warn"
+expect_used = "warn"
+indexing_slicing = "warn"
+
+# Performance lints
+inefficient_to_string = "warn"
+large_enum_variant = "warn"
+large_stack_arrays = "warn"
+redundant_clone = "warn"
+
+# Documentation lints
+missing_errors_doc = "warn"
+missing_panics_doc = "warn"
+missing_safety_doc = "warn"
+
+# Essential benchmarks only
+[[bench]]
+name = "transform_benchmark"
+harness = false
+
+[[bench]]
+name = "incremental_benchmark"
+harness = false
+
+[[bench]]
+name = "clean_char_benchmark"
+harness = false
+
+[[bench]]
+name = "optimization_benchmark"
+harness = false
+
+[[bench]]
+name = "syllable_benchmark"
+harness = false
+
+[[bench]]
+name = "safety_benchmark"
+harness = false
+
+[[bench]]
+name = "assembly_vs_rust_benchmark"
+harness = false
+
+[build-dependencies]
+cc = "1.0"
+
+# Advanced optimization profiles for maximum performance
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+overflow-checks = false
+debug-assertions = false
+strip = true
+
+# Profile-Guided Optimization profile
+[profile.pgo]
+inherits = "release"
+lto = "fat"
+codegen-units = 1
+
+# Ultra-performance profile for benchmarking
+[profile.ultra]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+overflow-checks = false
+debug-assertions = false
+strip = true
+
+# Note: Linting configuration is defined earlier in the file

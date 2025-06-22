@@ -1,0 +1,27 @@
+---
+source: tests/vni.rs
+expression: snapshot_transform(contents)
+info:
+  input_file: "../testdata/input/simple_vni.txt"
+---
+tôi là ai
+đây là đâu
+thêm một cái nữa
+ví tiền
+chào
+vơ
+ru
+vươn
+chÊ
+ă
+111222333444555666777888999000
+chệch
+che8
+vươn
+a1
+hoảng
+gì
+việt nam
+xuất hiện xuất hiện xuất hiện
+ha
+

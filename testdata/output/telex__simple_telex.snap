@@ -1,0 +1,75 @@
+---
+source: tests/telex.rs
+expression: snapshot_transform(contents)
+info:
+  input_file: "../testdata/input/simple_telex.txt"
+---
+tôi là ai
+đây là đâu
+thêm một cái nữa
+ví tiền
+CHÀO
+vơ
+ru
+vươn
+chÊ
+ă
+zzzjjjjhhhkkk
+chệch
+chew
+vươn
+as
+hoảng
+được phát triển bởi cộng đồng lập trình viên hàng đầu VN
+gì
+được
+ăn cơm chưa
+Đây là
+Đ$ay
+xử lý
+bây giờ
+thế giới
+hoặc
+con cừu
+dưới
+dưới
+hướng
+daasd
+aa
+dd
+chuw
+chw
+ựo
+chuyện
+quăng
+tiếng việt
+việt nam
+xuất hiện xuất hiện xuất hiện
+giàng ơi
+Giàng ơi
+ươ
+ưo
+ươn
+hưo
+huơ
+thuở
+được
+trước
+ngoao
+ngoeo
+ngoáo
+ngoéo
+giư
+giữa
+ha
+trưo
+trường
+ươi
+cười
+hường
+chửa
+chuảwz
+ừa
+w
+ư
+Ư

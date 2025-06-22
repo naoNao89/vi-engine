@@ -1,0 +1,104 @@
+# Cross-compilation configuration for vi-engine
+# Enables building for multiple architectures from Mac ARM
+
+[build]
+# Default target for native builds
+target-dir = "target"
+
+# Cross-compilation targets
+[target.x86_64-apple-darwin]
+# x86_64 macOS - for simulation on Mac ARM
+linker = "clang"
+rustflags = [
+    "-C", "link-arg=-arch",
+    "-C", "link-arg=x86_64",
+    "-C", "target-cpu=x86-64",
+]
+
+# Note: Linux cross-compilation requires installing cross-compilation toolchains
+# For now, we'll focus on macOS targets that work out of the box
+
+# [target.x86_64-unknown-linux-gnu]
+# # x86_64 Linux - requires cross-compilation toolchain
+# # Install with: brew install x86_64-linux-gnu-gcc
+# linker = "x86_64-linux-gnu-gcc"
+# rustflags = [
+#     "-C", "target-cpu=x86-64",
+#     "-C", "link-arg=-static-libgcc",
+# ]
+
+# [target.aarch64-unknown-linux-gnu]
+# # Generic ARM64 Linux - requires cross-compilation toolchain
+# # Install with: brew install aarch64-linux-gnu-gcc
+# linker = "aarch64-linux-gnu-gcc"
+# rustflags = [
+#     "-C", "target-cpu=generic",
+#     "-C", "link-arg=-static-libgcc",
+# ]
+
+# Optimization flags for cross-compilation
+[profile.release-cross]
+inherits = "release"
+opt-level = 3
+lto = "thin"  # Use thin LTO for faster cross-compilation
+codegen-units = 4  # Allow more codegen units for parallel compilation
+panic = "abort"
+overflow-checks = false
+debug-assertions = false
+strip = true
+
+# Profile for x86_64 simulation
+[profile.x86-sim]
+inherits = "release"
+opt-level = 2  # Slightly lower optimization for faster compilation
+lto = false
+codegen-units = 8
+debug = true  # Keep debug info for simulation
+strip = false
+
+# Profile for generic ARM
+[profile.arm-generic]
+inherits = "release"
+opt-level = 3
+lto = "thin"
+codegen-units = 2
+panic = "abort"
+overflow-checks = false
+debug-assertions = false
+strip = true
+
+# Aliases for common cross-compilation commands
+[alias]
+# Build for x86_64 macOS (simulation)
+build-x86-mac = "build --target x86_64-apple-darwin --profile x86-sim"
+test-x86-mac = "test --target x86_64-apple-darwin"
+
+# Build for x86_64 Linux (requires cross-compilation toolchain)
+# build-x86-linux = "build --target x86_64-unknown-linux-gnu --profile release-cross"
+# test-x86-linux = "test --target x86_64-unknown-linux-gnu"
+
+# Build for generic ARM64 Linux (requires cross-compilation toolchain)
+# build-arm-linux = "build --target aarch64-unknown-linux-gnu --profile arm-generic"
+# test-arm-linux = "test --target aarch64-unknown-linux-gnu"
+
+# Build all targets (currently only macOS targets work out of the box)
+build-all = [
+    "build --target aarch64-apple-darwin",
+    "build --target x86_64-apple-darwin --profile x86-sim"
+]
+
+# Test all targets (where possible)
+test-all = [
+    "test --target aarch64-apple-darwin",
+    "test --target x86_64-apple-darwin"
+]
+
+# Benchmark specific targets
+bench-native = "bench --target aarch64-apple-darwin"
+bench-x86-sim = "bench --target x86_64-apple-darwin"
+
+# Check all targets for compilation errors
+check-all = [
+    "check --target aarch64-apple-darwin",
+    "check --target x86_64-apple-darwin"
+]
