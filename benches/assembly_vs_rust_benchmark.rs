@@ -1,9 +1,12 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use std::hint::black_box;
-use vi::{
-    asm_clean_char_unsafe, asm_clean_string_unsafe, clean_char, clean_string,
-    initialize_assembly_safety, is_assembly_available, SafeAssemblyProcessor,
-};
+use vi::{clean_char, clean_string, initialize_assembly_safety, SafeAssemblyProcessor};
+
+#[cfg(feature = "unsafe_performance")]
+use vi::is_assembly_available;
+
+#[cfg(feature = "unsafe_performance")]
+use vi::{asm_clean_char_unsafe, asm_clean_string_unsafe};
 
 /// Performance-optimized benchmark without safety overhead
 fn performance_optimized_benchmark(c: &mut Criterion) {
@@ -18,6 +21,7 @@ fn performance_optimized_benchmark(c: &mut Criterion) {
     });
 
     // Assembly without safety overhead (if available)
+    #[cfg(feature = "unsafe_performance")]
     if is_assembly_available() {
         group.bench_function("assembly_unsafe", |b| {
             b.iter(|| black_box(asm_clean_string_unsafe(black_box(&test_string))))

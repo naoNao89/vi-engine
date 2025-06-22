@@ -5,7 +5,7 @@
 
 // Link the static library directly
 #[cfg(feature = "apple_silicon_assembly")]
-#[link(name = "aarch64_apple_silicon", kind = "static")]
+#[link(name = "apple_silicon_kernels", kind = "static")]
 extern "C" {
     fn apple_hybrid_clean_chars_bulk_neon_optimized(
         input: *const u32,

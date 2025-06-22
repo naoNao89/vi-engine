@@ -349,7 +349,68 @@ Lneon_done:
     ldp x29, x30, [sp], #16
     ret
 
+// Safety-aware bulk character processing with control structure
+// Input: x0 = input array pointer, x1 = output array pointer, x2 = length, x3 = control pointer
+// Output: x0 = number of characters processed
+.global _hybrid_clean_chars_bulk_safe
+.p2align 2
+_hybrid_clean_chars_bulk_safe:
+    stp x29, x30, [sp, #-16]!
+    mov x29, sp
+
+    // Save parameters
+    mov x9, x0   // input pointer
+    mov x10, x1  // output pointer
+    mov x11, x2  // length
+    mov x12, x3  // control pointer
+    mov x13, #0  // processed count
+
+    // Process characters one by one with safety checks
+    mov x3, x11  // Use x3 as remaining count
+
+Lsafe_loop:
+    cbz x3, Lsafe_done
+
+    // Check cancellation flag every 64 iterations for minimal overhead
+    and x14, x13, #0x3F
+    cbnz x14, Lsafe_skip_check
+
+    // Load cancel flag (first byte of AssemblyControl)
+    ldrb w14, [x12]
+    cbnz w14, Lsafe_cancelled
+
+Lsafe_skip_check:
+    ldr w0, [x9], #4    // Load input character
+
+    // Save registers that might be modified by the function call
+    stp x9, x10, [sp, #-16]!
+    stp x11, x12, [sp, #-16]!
+    stp x13, x3, [sp, #-16]!
+
+    bl _hybrid_clean_char_aarch64
+
+    // Restore registers
+    ldp x13, x3, [sp], #16
+    ldp x11, x12, [sp], #16
+    ldp x9, x10, [sp], #16
+
+    str w0, [x10], #4   // Store processed character
+    add x13, x13, #1    // Increment processed count
+    subs x3, x3, #1     // Decrement remaining count
+    b.ne Lsafe_loop
+
+Lsafe_done:
+    mov x0, x13  // Return total processed count
+    ldp x29, x30, [sp], #16
+    ret
+
+Lsafe_cancelled:
+    mov x0, #0   // Return 0 to indicate cancellation
+    ldp x29, x30, [sp], #16
+    ret
+
 // Export symbols for C linkage
 .global _hybrid_clean_char_aarch64
 .global _hybrid_clean_char_neon
 .global _hybrid_clean_chars_bulk_neon
+.global _hybrid_clean_chars_bulk_safe

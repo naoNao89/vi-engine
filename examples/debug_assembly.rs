@@ -47,7 +47,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         let assembly_duration = start.elapsed();
 
-        if successful_calls > 0 {
+        let _assembly_ns_per_char = if successful_calls > 0 {
             let assembly_ns_per_char =
                 assembly_duration.as_nanos() as f64 / successful_calls as f64;
             println!(
@@ -63,9 +63,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             } else {
                 println!("✅ Safe assembly is faster than Rust");
             }
+            Some(assembly_ns_per_char)
         } else {
             println!("❌ All safe assembly calls failed");
-        }
+            None
+        };
 
         // Test unsafe assembly performance if available
         #[cfg(feature = "unsafe_performance")]
@@ -90,8 +92,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             // Calculate safety overhead
-            if successful_calls > 0 {
-                let safety_overhead = assembly_ns_per_char / unsafe_ns_per_char;
+            if let Some(safe_ns_per_char) = _assembly_ns_per_char {
+                let safety_overhead = safe_ns_per_char / unsafe_ns_per_char;
                 println!("Safety overhead: {:.2}x", safety_overhead);
             }
         }
