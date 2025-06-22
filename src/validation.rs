@@ -27,6 +27,7 @@ const VOWELS: Set<&'static str> = phf_set![
 ];
 
 /// Verify if a syllable is a valid vietnamese syllable.
+#[must_use]
 pub fn is_valid_syllable(input: &str) -> bool {
     let Ok((_, components)) = parse_syllable(input) else {
         return false;
@@ -61,6 +62,7 @@ pub fn is_valid_syllable(input: &str) -> bool {
 }
 
 /// Checks if the given string is a valid Vietnamese initial consonant.
+#[must_use]
 pub fn is_valid_initial_consonant(consonant: &str) -> bool {
     let consonant = consonant.to_lowercase();
     let consonant_length = consonant.chars().count();
@@ -82,6 +84,7 @@ pub fn is_valid_initial_consonant(consonant: &str) -> bool {
 }
 
 /// Checks if the given string is a valid Vietnamese final consonant.
+#[must_use]
 pub fn is_valid_final_consonant(consonant: &str) -> bool {
     let consonant = consonant.to_lowercase();
     FINAL_CONSONANTS.contains(consonant.as_str())

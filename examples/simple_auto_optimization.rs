@@ -35,7 +35,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for input in &test_cases {
         let result = processor.process_string(input)?;
-        println!("  '{}' → '{}'", input, result);
+        println!("  '{input}' → '{result}'");
     }
 
     // Show performance statistics

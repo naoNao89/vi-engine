@@ -21,10 +21,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test basic Vietnamese text processing
     let test_text = "Tiếng Việt rất đẹp và phong phú";
-    println!("\n📝 Input: {}", test_text);
+    println!("\n📝 Input: {test_text}");
 
     let result = processor.process_string_safe(test_text).await?;
-    println!("✨ Output: {}", result);
+    println!("✨ Output: {result}");
 
     // Test with timeout
     println!("\n⏱️  Testing with timeout...");
@@ -43,7 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             );
         }
         Ok(Err(e)) => {
-            println!("❌ Processing failed: {}", e);
+            println!("❌ Processing failed: {e}");
         }
         Err(_) => {
             println!("⏰ Operation timed out (as expected for large input)");

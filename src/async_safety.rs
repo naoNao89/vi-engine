@@ -47,6 +47,7 @@ impl AsyncSafeAssemblyProcessor {
     }
 
     /// Create async processor with custom timeout
+    #[must_use]
     pub fn with_timeout(timeout_ms: u64) -> Self {
         let processor = Self::new();
         processor
@@ -146,15 +147,14 @@ impl AsyncSafeAssemblyProcessor {
 
         // Apply timeout if specified
         let result = if timeout_ms > 0 {
-            match timeout(Duration::from_millis(timeout_ms), operation).await {
-                Ok(result) => result,
-                Err(_) => {
-                    self.control
-                        .timeout_flag
-                        .store(true, std::sync::atomic::Ordering::SeqCst);
-                    self.control.cancel_all();
-                    Err(AssemblyError::Timeout)
-                }
+            if let Ok(result) = timeout(Duration::from_millis(timeout_ms), operation).await {
+                result
+            } else {
+                self.control
+                    .timeout_flag
+                    .store(true, std::sync::atomic::Ordering::SeqCst);
+                self.control.cancel_all();
+                Err(AssemblyError::Timeout)
             }
         } else {
             operation.await
@@ -200,7 +200,7 @@ impl AsyncSafeAssemblyProcessor {
 
         tokio::select! {
             result = operation => result,
-            _ = cancellation => {
+            () = cancellation => {
                 self.cancel().await;
                 Err(AssemblyError::Cancelled)
             }
@@ -214,18 +214,21 @@ impl AsyncSafeAssemblyProcessor {
     }
 
     /// Get safety metrics
+    #[must_use]
     pub fn get_metrics(&self) -> &SafetyMetrics {
         &self.metrics
     }
 
     /// Check if watchdog is enabled
+    #[must_use]
     pub fn has_watchdog(&self) -> bool {
         self.watchdog.is_some()
     }
 
     /// Get watchdog configuration if enabled
+    #[must_use]
     pub fn watchdog_config(&self) -> Option<&WatchdogConfig> {
-        self.watchdog.as_ref().map(|w| w.config())
+        self.watchdog.as_ref().map(AsyncAssemblyWatchdog::config)
     }
 
     /// Internal character processing using actual Vietnamese processing
@@ -311,11 +314,11 @@ impl AsyncAssemblyWatchdog {
 
         loop {
             tokio::select! {
-                _ = shutdown_notify.notified() => {
+                () = shutdown_notify.notified() => {
                     log::debug!("Async watchdog shutting down");
                     break;
                 }
-                _ = sleep(Duration::from_millis(config.check_interval_ms)) => {
+                () = sleep(Duration::from_millis(config.check_interval_ms)) => {
                     // Check if there's an active operation
                     let start_time = control.start_time.load(std::sync::atomic::Ordering::Relaxed);
                     if start_time == 0 {
@@ -335,7 +338,7 @@ impl AsyncAssemblyWatchdog {
                         let elapsed_ms = (now - start_time) / 1_000_000;
 
                         if elapsed_ms > timeout_ms {
-                            log::debug!("Async watchdog detected timeout after {}ms", elapsed_ms);
+                            log::debug!("Async watchdog detected timeout after {elapsed_ms}ms");
                             control.timeout_flag.store(true, std::sync::atomic::Ordering::SeqCst);
                             control.cancel_flag.store(true, std::sync::atomic::Ordering::SeqCst);
                             cancellation_notify.notify_waiters();
@@ -378,6 +381,7 @@ impl AsyncAssemblyWatchdog {
     }
 
     /// Get watchdog configuration
+    #[must_use]
     pub fn config(&self) -> &WatchdogConfig {
         &self.config
     }

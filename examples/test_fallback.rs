@@ -38,13 +38,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let rust_result = clean_char(ch);
         let asm_result = asm_clean_char(ch)?;
 
-        println!(
-            "'{}' -> Rust: '{}', Assembly: '{}'",
-            ch, rust_result, asm_result
-        );
+        println!("'{ch}' -> Rust: '{rust_result}', Assembly: '{asm_result}'");
 
         // Verify results match
-        assert_eq!(rust_result, asm_result, "Results should match for '{}'", ch);
+        assert_eq!(rust_result, asm_result, "Results should match for '{ch}'");
     }
     println!();
 
@@ -56,16 +53,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let rust_result = clean_string(input);
         let asm_result = asm_clean_string(input)?;
 
-        println!("Input:    '{}'", input);
-        println!("Rust:     '{}'", rust_result);
-        println!("Assembly: '{}'", asm_result);
+        println!("Input:    '{input}'");
+        println!("Rust:     '{rust_result}'");
+        println!("Assembly: '{asm_result}'");
         println!();
 
         // Verify results match
         assert_eq!(
             rust_result, asm_result,
-            "Results should match for '{}'",
-            input
+            "Results should match for '{input}'"
         );
     }
 

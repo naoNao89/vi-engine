@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-/// Demonstrates the builder pattern with #[must_use] attributes
+/// Demonstrates the builder pattern with #[`must_use`] attributes
 fn demonstrate_builder_pattern() -> Result<(), Box<dyn std::error::Error>> {
     println!("📦 Builder Pattern with #[must_use] Attributes");
     println!("----------------------------------------------");
@@ -41,11 +41,11 @@ fn demonstrate_builder_pattern() -> Result<(), Box<dyn std::error::Error>> {
     // Process some text
     let input_text = "Tiếng Việt rất đẹp!";
     let result = processor.process_string(input_text)?;
-    println!("Processed: '{}' -> '{}'", input_text, result);
+    println!("Processed: '{input_text}' -> '{result}'");
 
     // Get optimization info (has #[must_use])
     let info = processor.optimization_info();
-    println!("Optimization: {}", info);
+    println!("Optimization: {info}");
 
     // Get statistics (has #[must_use])
     let stats = processor.stats();
@@ -78,7 +78,7 @@ fn demonstrate_syllable_types() {
     println!();
 }
 
-/// Demonstrates optimization preferences with #[non_exhaustive] enums
+/// Demonstrates optimization preferences with #[`non_exhaustive`] enums
 fn demonstrate_optimization_preferences() -> Result<(), Box<dyn std::error::Error>> {
     println!("⚡ Optimization Preferences (#[non_exhaustive] Enums)");
     println!("----------------------------------------------------");
@@ -99,10 +99,10 @@ fn demonstrate_optimization_preferences() -> Result<(), Box<dyn std::error::Erro
             Ok(mut processor) => {
                 let test_text = "Xin chào";
                 let result = processor.process_string(test_text)?;
-                println!("{}: '{}' -> '{}'", name, test_text, result);
+                println!("{name}: '{test_text}' -> '{result}'");
             }
             Err(e) => {
-                println!("{}: Error - {}", name, e);
+                println!("{name}: Error - {e}");
             }
         }
     }

@@ -150,27 +150,28 @@ pub fn modify_letter(syllable: &mut Syllable, modification: &LetterModification)
             let max_horn_modification_possible = modification_possibilities.len();
 
             if horn_modification_count < max_horn_modification_possible {
-                let other_modification_position = modification_possibilities
+                if let Some(other_modification_position) = modification_possibilities
                     .iter()
                     .find(|index| {
                         current_modifications
                             .iter()
                             .any(|(current_index, _)| *current_index != **index)
                     })
-                    .unwrap();
-                syllable
-                    .letter_modifications
-                    .push((*other_modification_position, LetterModification::Horn));
-                return Transformation::LetterModificationAdded;
+                {
+                    syllable
+                        .letter_modifications
+                        .push((*other_modification_position, LetterModification::Horn));
+                    return Transformation::LetterModificationAdded;
+                }
             }
         }
-        syllable.letter_modifications.remove(
-            syllable
-                .letter_modifications
-                .iter()
-                .position(|(_, m)| m == modification)
-                .unwrap(),
-        );
+        if let Some(position) = syllable
+            .letter_modifications
+            .iter()
+            .position(|(_, m)| m == modification)
+        {
+            syllable.letter_modifications.remove(position);
+        }
         return Transformation::LetterModificationRemoved;
     }
 

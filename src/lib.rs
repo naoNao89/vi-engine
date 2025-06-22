@@ -292,6 +292,7 @@ pub use memory_profiling::{
 /// Performance-optimized character cleaning for benchmarking
 /// WARNING: Bypasses safety checks - only use for performance testing!
 #[cfg(any(test, feature = "unsafe_performance"))]
+#[must_use]
 pub fn asm_clean_char_unsafe(ch: char) -> char {
     asm::direct_asm::process_char_unsafe(ch)
 }
@@ -299,6 +300,7 @@ pub fn asm_clean_char_unsafe(ch: char) -> char {
 /// Performance-optimized string cleaning for benchmarking
 /// WARNING: Bypasses safety checks - only use for performance testing!
 #[cfg(any(test, feature = "unsafe_performance"))]
+#[must_use]
 pub fn asm_clean_string_unsafe(input: &str) -> String {
     let chars: Vec<char> = input.chars().collect();
     let result = asm::direct_asm::process_chars_bulk_unsafe(&chars);

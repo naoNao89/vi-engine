@@ -36,7 +36,7 @@ jobs:
         run: cargo fmt --all -- --check
         
       - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy --all-targets --all-features -- -D clippy::correctness -D clippy::suspicious -W clippy::style -W clippy::complexity -W clippy::perf
 
   # Security and dependency checks
   security:

@@ -25,7 +25,7 @@ pub enum CpuArchitecture {
         /// Whether advanced SIMD instructions are available
         has_advanced_simd: bool,
     },
-    /// x86_64 with various SIMD capabilities
+    /// `x86_64` with various SIMD capabilities
     X86_64 {
         /// Whether AVX2 instructions are available
         has_avx2: bool,
@@ -51,7 +51,7 @@ pub enum CpuArchitecture {
 pub enum PerformanceTier {
     /// Ultra-high performance tier (>1B chars/sec) - Apple Silicon
     Tier1UltraHigh = 4,
-    /// High performance tier (>800M chars/sec) - x86_64 with AVX-512
+    /// High performance tier (>800M chars/sec) - `x86_64` with AVX-512
     Tier2High = 3,
     /// Good performance tier (>500M chars/sec) - ARM64 with NEON
     Tier3Good = 2,
@@ -84,6 +84,7 @@ impl CpuCapabilities {
 
     /// Forces redetection of CPU capabilities (for testing purposes).
     #[cfg(test)]
+    #[must_use]
     pub fn force_redetect() -> CpuCapabilities {
         Self::detect_runtime_capabilities()
     }
@@ -193,7 +194,7 @@ impl CpuCapabilities {
         match architecture {
             CpuArchitecture::AppleSilicon { generation, .. } => {
                 let base_score = 1000;
-                let generation_bonus = (*generation as u32) * 100;
+                let generation_bonus = u32::from(*generation) * 100;
                 (
                     PerformanceTier::Tier1UltraHigh,
                     base_score + generation_bonus,
@@ -270,8 +271,7 @@ impl CpuCapabilities {
                 efficiency_cores,
             } => {
                 format!(
-                    "Apple Silicon M{} ({} performance + {} efficiency cores)",
-                    generation, performance_cores, efficiency_cores
+                    "Apple Silicon M{generation} ({performance_cores} performance + {efficiency_cores} efficiency cores)"
                 )
             }
             CpuArchitecture::GenericArm64 { has_neon, .. } => {
@@ -304,7 +304,7 @@ impl CpuCapabilities {
                 )
             }
             CpuArchitecture::Other { arch_name } => {
-                format!("Other ({})", arch_name)
+                format!("Other ({arch_name})")
             }
         }
     }

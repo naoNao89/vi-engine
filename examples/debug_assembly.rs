@@ -1,6 +1,4 @@
 use std::time::Instant;
-#[cfg(feature = "unsafe_performance")]
-use vi::asm_clean_char_unsafe;
 use vi::{
     asm_clean_char, clean_char, get_assembly_info, initialize_assembly_safety,
     is_assembly_available,
@@ -28,9 +26,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let _ = clean_char(test_char);
     }
     let rust_duration = start.elapsed();
-    let rust_ns_per_char = rust_duration.as_nanos() as f64 / iterations as f64;
+    let rust_ns_per_char = rust_duration.as_nanos() as f64 / f64::from(iterations);
 
-    println!("Rust: {:.2} ns/char", rust_ns_per_char);
+    println!("Rust: {rust_ns_per_char:.2} ns/char");
 
     // Assembly implementation with safety (if available)
     if is_assembly_available() {
@@ -40,67 +38,37 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             match asm_clean_char(test_char) {
                 Ok(_) => successful_calls += 1,
                 Err(e) => {
-                    println!("Assembly error: {:?}", e);
+                    println!("Assembly error: {e:?}");
                     break;
                 }
             }
         }
         let assembly_duration = start.elapsed();
 
-        let _assembly_ns_per_char = if successful_calls > 0 {
-            let assembly_ns_per_char =
-                assembly_duration.as_nanos() as f64 / successful_calls as f64;
+        if successful_calls > 0 {
+            let assembly_ns_per_char = {
+                let nanos = assembly_duration.as_nanos();
+                let nanos_f64 = if nanos > (1u64 << 53) as u128 {
+                    (1u64 << 53) as f64
+                } else {
+                    nanos as f64
+                };
+                nanos_f64 / f64::from(successful_calls)
+            };
             println!(
-                "Assembly (safe): {:.2} ns/char ({} successful calls)",
-                assembly_ns_per_char, successful_calls
+                "Assembly (safe): {assembly_ns_per_char:.2} ns/char ({successful_calls} successful calls)"
             );
 
             let speedup = rust_ns_per_char / assembly_ns_per_char;
-            println!("Safe speedup: {:.2}x", speedup);
+            println!("Safe speedup: {speedup:.2}x");
 
             if speedup < 1.0 {
                 println!("⚠️  Safe assembly is slower than Rust (safety overhead)");
             } else {
                 println!("✅ Safe assembly is faster than Rust");
             }
-            Some(assembly_ns_per_char)
         } else {
             println!("❌ All safe assembly calls failed");
-            None
-        };
-
-        // Test unsafe assembly performance if available
-        #[cfg(feature = "unsafe_performance")]
-        {
-            println!("\n--- Unsafe Assembly Performance ---");
-            let start = Instant::now();
-            for _ in 0..iterations {
-                let _ = asm_clean_char_unsafe(test_char);
-            }
-            let unsafe_duration = start.elapsed();
-            let unsafe_ns_per_char = unsafe_duration.as_nanos() as f64 / iterations as f64;
-
-            println!("Assembly (unsafe): {:.2} ns/char", unsafe_ns_per_char);
-
-            let unsafe_speedup = rust_ns_per_char / unsafe_ns_per_char;
-            println!("Unsafe speedup: {:.2}x", unsafe_speedup);
-
-            if unsafe_speedup < 1.0 {
-                println!("⚠️  Unsafe assembly is slower than Rust");
-            } else {
-                println!("✅ Unsafe assembly is faster than Rust");
-            }
-
-            // Calculate safety overhead
-            if let Some(safe_ns_per_char) = _assembly_ns_per_char {
-                let safety_overhead = safe_ns_per_char / unsafe_ns_per_char;
-                println!("Safety overhead: {:.2}x", safety_overhead);
-            }
-        }
-        #[cfg(not(feature = "unsafe_performance"))]
-        {
-            println!("\n--- Unsafe Performance Test Disabled ---");
-            println!("Enable with: cargo run --release --features unsafe_performance --example debug_assembly");
         }
     } else {
         println!("❌ Assembly not available - using Rust fallback");
@@ -117,20 +85,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             match asm_clean_char(ch) {
                 Ok(assembly_result) => {
                     if rust_result == assembly_result {
-                        println!("✅ '{}' -> '{}' (consistent)", ch, rust_result);
+                        println!("✅ '{ch}' -> '{rust_result}' (consistent)");
                     } else {
                         println!(
-                            "❌ '{}' -> Rust: '{}', Assembly: '{}'",
-                            ch, rust_result, assembly_result
+                            "❌ '{ch}' -> Rust: '{rust_result}', Assembly: '{assembly_result}'"
                         );
                     }
                 }
                 Err(e) => {
-                    println!("❌ '{}' -> Assembly error: {:?}", ch, e);
+                    println!("❌ '{ch}' -> Assembly error: {e:?}");
                 }
             }
         } else {
-            println!("✅ '{}' -> '{}' (Rust only)", ch, rust_result);
+            println!("✅ '{ch}' -> '{rust_result}' (Rust only)");
         }
     }
 

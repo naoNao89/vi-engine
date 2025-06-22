@@ -91,8 +91,7 @@ fn test_character_correctness() {
                 rust_result as u32 <= 127 || rust_result.is_ascii_alphabetic();
             assert!(
                 is_properly_cleaned,
-                "Vietnamese character '{}' should be cleaned to basic Latin, got '{}'",
-                ch, rust_result
+                "Vietnamese character '{ch}' should be cleaned to basic Latin, got '{rust_result}'"
             );
         }
     }
@@ -110,12 +109,11 @@ fn test_string_correctness() {
                 Ok(assembly_result) => {
                     assert_eq!(
                         rust_result, assembly_result,
-                        "Rust and Assembly results should match for string '{}'",
-                        test_string
+                        "Rust and Assembly results should match for string '{test_string}'"
                     );
                 }
                 Err(_) => {
-                    println!("Assembly operation cancelled for string: '{}'", test_string);
+                    println!("Assembly operation cancelled for string: '{test_string}'");
                 }
             }
         }
@@ -125,8 +123,7 @@ fn test_string_correctness() {
             let is_basic_latin = ch as u32 <= 127 || ch.is_ascii_alphabetic();
             assert!(
                 is_basic_latin || ch.is_whitespace() || ch.is_ascii_punctuation(),
-                "Cleaned string should not contain Vietnamese diacritics, found '{}' in result '{}'",
-                ch, rust_result
+                "Cleaned string should not contain Vietnamese diacritics, found '{ch}' in result '{rust_result}'"
             );
         }
     }
@@ -165,20 +162,25 @@ fn test_performance_regression() -> Result<(), Box<dyn std::error::Error>> {
             #[cfg(not(feature = "unsafe_performance"))]
             {
                 // Fallback to safe assembly with expected lower performance
-                match asm_clean_string(&test_data) {
-                    Ok(_) => {}
-                    Err(_) => {
-                        println!(
-                            "Warning: Assembly operation cancelled, skipping assembly performance test"
-                        );
-                        return Ok(());
-                    }
+                if let Ok(_) = asm_clean_string(&test_data) {
+                } else {
+                    println!(
+                        "Warning: Assembly operation cancelled, skipping assembly performance test"
+                    );
+                    return Ok(());
                 }
             }
         }
         let assembly_duration = assembly_start.elapsed();
-        let assembly_throughput =
-            (test_data.len() * iterations) as f64 / assembly_duration.as_secs_f64();
+        let assembly_throughput = {
+            let total_chars = test_data.len() * iterations;
+            let total_chars_f64 = if total_chars > (1u64 << 53) as usize {
+                (1u64 << 53) as f64
+            } else {
+                total_chars as f64
+            };
+            total_chars_f64 / assembly_duration.as_secs_f64()
+        };
 
         println!(
             "Assembly throughput: {:.2} M chars/sec",
@@ -187,7 +189,7 @@ fn test_performance_regression() -> Result<(), Box<dyn std::error::Error>> {
 
         // Assembly performance check with realistic expectations
         let speedup = assembly_throughput / rust_throughput;
-        println!("Assembly speedup: {:.2}x", speedup);
+        println!("Assembly speedup: {speedup:.2}x");
 
         // Performance expectations depend on whether unsafe optimizations are enabled
         #[cfg(feature = "unsafe_performance")]
@@ -197,8 +199,7 @@ fn test_performance_regression() -> Result<(), Box<dyn std::error::Error>> {
             // This represents a 42x improvement from the original 0.01x performance
             assert!(
                 speedup >= 0.3,
-                "Assembly implementation is too slow. Speedup: {:.2}x (expected >= 0.3x)",
-                speedup
+                "Assembly implementation is too slow. Speedup: {speedup:.2}x (expected >= 0.3x)"
             );
         }
         #[cfg(not(feature = "unsafe_performance"))]
@@ -209,8 +210,7 @@ fn test_performance_regression() -> Result<(), Box<dyn std::error::Error>> {
             // The focus is on correctness and safety rather than raw performance.
             assert!(
                 speedup >= 0.005,
-                "Assembly implementation is too slow. Speedup: {:.3}x (expected >= 0.005x)",
-                speedup
+                "Assembly implementation is too slow. Speedup: {speedup:.3}x (expected >= 0.005x)"
             );
 
             // Log performance characteristics for monitoring
@@ -223,12 +223,9 @@ fn test_performance_regression() -> Result<(), Box<dyn std::error::Error>> {
 
         // Ideally assembly should be faster than Rust, but allow for test environment variance
         if speedup >= 1.0 {
-            println!(
-                "✅ Assembly implementation is faster than Rust: {:.2}x speedup",
-                speedup
-            );
+            println!("✅ Assembly implementation is faster than Rust: {speedup:.2}x speedup");
         } else {
-            println!("⚠️  Assembly implementation is slower than Rust: {:.2}x speedup (may be due to test environment)", speedup);
+            println!("⚠️  Assembly implementation is slower than Rust: {speedup:.2}x speedup (may be due to test environment)");
         }
     }
 
@@ -311,7 +308,7 @@ fn test_unicode_edge_cases() {
                     );
                 }
                 Err(_) => {
-                    println!("Assembly operation cancelled for Unicode char: {}", ch);
+                    println!("Assembly operation cancelled for Unicode char: {ch}");
                 }
             }
         }
@@ -341,10 +338,7 @@ fn test_memory_safety() {
                 Err(_) => {
                     // Assembly operation was cancelled due to safety timeout
                     // This is acceptable behavior for the safety system
-                    println!(
-                        "Assembly operation cancelled for size {} - safety timeout",
-                        size
-                    );
+                    println!("Assembly operation cancelled for size {size} - safety timeout");
                 }
             }
         }
@@ -432,18 +426,58 @@ fn test_performance_characteristics() {
 
     // Performance should scale roughly linearly with input size
     for i in 1..sizes.len() {
-        let size_ratio = sizes[i] as f64 / sizes[i - 1] as f64;
-        let rust_time_ratio = rust_times[i].as_nanos() as f64 / rust_times[i - 1].as_nanos() as f64;
-        let assembly_time_ratio =
-            assembly_times[i].as_nanos() as f64 / assembly_times[i - 1].as_nanos() as f64;
+        let size_ratio = {
+            let current_size = if sizes[i] > (1u64 << 53) as usize {
+                (1u64 << 53) as f64
+            } else {
+                sizes[i] as f64
+            };
+            let prev_size = if sizes[i - 1] > (1u64 << 53) as usize {
+                (1u64 << 53) as f64
+            } else {
+                sizes[i - 1] as f64
+            };
+            current_size / prev_size
+        };
+
+        let rust_time_ratio = {
+            let current_nanos = rust_times[i].as_nanos();
+            let prev_nanos = rust_times[i - 1].as_nanos();
+            let current_f64 = if current_nanos > (1u64 << 53) as u128 {
+                (1u64 << 53) as f64
+            } else {
+                current_nanos as f64
+            };
+            let prev_f64 = if prev_nanos > (1u64 << 53) as u128 {
+                (1u64 << 53) as f64
+            } else {
+                prev_nanos as f64
+            };
+            current_f64 / prev_f64
+        };
+
+        let assembly_time_ratio = {
+            let current_nanos = assembly_times[i].as_nanos();
+            let prev_nanos = assembly_times[i - 1].as_nanos();
+            let current_f64 = if current_nanos > (1u64 << 53) as u128 {
+                (1u64 << 53) as f64
+            } else {
+                current_nanos as f64
+            };
+            let prev_f64 = if prev_nanos > (1u64 << 53) as u128 {
+                (1u64 << 53) as f64
+            } else {
+                prev_nanos as f64
+            };
+            current_f64 / prev_f64
+        };
 
         // Allow for significant variance in timing measurements (especially in test environments)
         // Performance scaling can be highly variable due to CPU scheduling, memory allocation,
         // garbage collection, and other system factors in test environments
         if rust_time_ratio < size_ratio * 0.01 || rust_time_ratio > size_ratio * 200.0 {
             println!(
-                "Warning: Rust performance scaling is unusual. Size ratio: {:.2}, Time ratio: {:.2}",
-                size_ratio, rust_time_ratio
+                "Warning: Rust performance scaling is unusual. Size ratio: {size_ratio:.2}, Time ratio: {rust_time_ratio:.2}"
             );
             // Don't fail the test for performance scaling issues in test environments
             // This is informational only
@@ -453,8 +487,7 @@ fn test_performance_characteristics() {
         // Just ensure it's not completely broken (very wide tolerance)
         if assembly_time_ratio > size_ratio * 100.0 || assembly_time_ratio < size_ratio * 0.01 {
             println!(
-                "Warning: Assembly performance scaling is unusual. Size ratio: {:.2}, Time ratio: {:.2}",
-                size_ratio, assembly_time_ratio
+                "Warning: Assembly performance scaling is unusual. Size ratio: {size_ratio:.2}, Time ratio: {assembly_time_ratio:.2}"
             );
             // Don't fail the test for performance scaling issues in test environments
         }

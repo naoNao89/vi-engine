@@ -16,10 +16,10 @@ fn benchmark_clean_char_vietnamese_chars(c: &mut Criterion) {
 
     c.bench_function("clean_char_vietnamese_chars", |b| {
         b.iter(|| {
-            for &ch in vietnamese_chars.iter() {
+            for &ch in &vietnamese_chars {
                 black_box(clean_char(black_box(ch)));
             }
-        })
+        });
     });
 }
 
@@ -33,10 +33,10 @@ fn benchmark_clean_char_non_vietnamese_chars(c: &mut Criterion) {
 
     c.bench_function("clean_char_non_vietnamese_chars", |b| {
         b.iter(|| {
-            for &ch in non_vietnamese_chars.iter() {
+            for &ch in &non_vietnamese_chars {
                 black_box(clean_char(black_box(ch)));
             }
-        })
+        });
     });
 }
 
@@ -48,7 +48,7 @@ fn benchmark_clean_char_mixed_text(c: &mut Criterion) {
             for ch in mixed_text.chars() {
                 black_box(clean_char(black_box(ch)));
             }
-        })
+        });
     });
 }
 
@@ -62,7 +62,7 @@ fn benchmark_clean_char_const_evaluation(c: &mut Criterion) {
             const CLEANED_4: char = clean_char('Đ');
 
             black_box((CLEANED_1, CLEANED_2, CLEANED_3, CLEANED_4));
-        })
+        });
     });
 }
 

@@ -32,7 +32,7 @@ use std::fmt::Display;
 
 use crate::{
     editing::{add_modification_char, add_tone_char, get_tone_mark_placement, replace_nth_char},
-    parsing::{extract_letter_modifications, extract_tone, parse_syllable},
+    parsing::{extract_letter_modifications, extract_tone, parse_syllable, SyllableComponents},
     processor::{modify_letter, AccentStyle, LetterModification, ToneMark},
     util::clean_char,
 };
@@ -59,7 +59,7 @@ pub struct Syllable {
     pub tone_mark: Option<ToneMark>,
     /// The accent style used when rendering the syllable. Defaults to [`AccentStyle::New`].
     pub accent_style: AccentStyle,
-    /// Letter modifications on the syllable, with their positions. Uses SmallVec for efficiency.
+    /// Letter modifications on the syllable, with their positions. Uses `SmallVec` for efficiency.
     pub letter_modifications: SmallVec<[(usize, LetterModification); 2]>,
 }
 
@@ -76,7 +76,7 @@ pub struct ComplexSyllable {
     pub tone_mark: Option<ToneMark>,
     /// The accent style used when rendering the syllable. Defaults to [`AccentStyle::New`].
     pub accent_style: AccentStyle,
-    /// Letter modifications on the syllable, with their positions. Uses SmallVec with larger capacity.
+    /// Letter modifications on the syllable, with their positions. Uses `SmallVec` with larger capacity.
     pub letter_modifications: SmallVec<[(usize, LetterModification); 4]>,
 }
 
@@ -93,7 +93,7 @@ pub struct SimpleSyllable {
     pub tone_mark: Option<ToneMark>,
     /// The accent style used when rendering the syllable. Defaults to [`AccentStyle::New`].
     pub accent_style: AccentStyle,
-    /// Letter modifications on the syllable, with their positions. Uses SmallVec with smaller capacity.
+    /// Letter modifications on the syllable, with their positions. Uses `SmallVec` with smaller capacity.
     pub letter_modifications: SmallVec<[(usize, LetterModification); 1]>,
 }
 
@@ -108,6 +108,7 @@ impl Syllable {
     /// let syllable = Syllable::new("hello");
     /// assert_eq!(syllable.to_string(), "hello");
     /// ```
+    #[must_use]
     pub fn new(input: &str) -> Self {
         let mut syllable = Self::default();
         syllable.set(input.to_string());
@@ -125,6 +126,7 @@ impl Syllable {
     /// assert_eq!(syllable.len(), 4);
     /// ```
     #[inline]
+    #[must_use]
     pub fn len(&self) -> usize {
         self.initial_consonant.chars().count()
             + self.vowel.chars().count()
@@ -145,6 +147,7 @@ impl Syllable {
     /// assert!(!syllable.is_empty());
     /// ```
     #[inline]
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.initial_consonant.is_empty()
             && self.vowel.is_empty()
@@ -157,7 +160,12 @@ impl Syllable {
             "{}{}{}{}",
             self.initial_consonant, self.vowel, self.final_consonant, ch
         );
-        let (_, syllable) = parse_syllable(&clean_syllable).unwrap();
+        let (_, syllable) = parse_syllable(&clean_syllable)
+            .unwrap_or_else(|_| ("", SyllableComponents {
+                initial_consonant: "",
+                vowel: &clean_syllable,
+                final_consonant: "",
+            }));
         self.initial_consonant = syllable.initial_consonant.chars().map(clean_char).collect();
         self.vowel = syllable.vowel.chars().map(clean_char).collect();
         self.final_consonant = syllable.final_consonant.to_string();
@@ -193,7 +201,12 @@ impl Syllable {
 
     /// Set a new value for the current syllable. This will parse the value into consonants, vowel, tonemark & modifications.
     pub fn set(&mut self, raw: String) {
-        let (_, syllable) = parse_syllable(&raw).unwrap();
+        let (_, syllable) = parse_syllable(&raw)
+            .unwrap_or_else(|_| ("", SyllableComponents {
+                initial_consonant: "",
+                vowel: &raw,
+                final_consonant: "",
+            }));
         self.initial_consonant = syllable.initial_consonant.chars().map(clean_char).collect();
         self.vowel = syllable.vowel.chars().map(clean_char).collect();
         self.final_consonant = syllable.final_consonant.to_string();
@@ -211,6 +224,7 @@ impl Syllable {
     }
 
     /// Indicate whether a modification exist in the syllable
+    #[must_use]
     pub fn contains_modification(&self, modification: &LetterModification) -> bool {
         self.letter_modifications
             .iter()
@@ -226,20 +240,21 @@ impl Display for Syllable {
         );
 
         for (position, modification) in &self.letter_modifications {
-            let ch = result.chars().nth(*position).unwrap();
-            let replace_char = add_modification_char(ch, modification);
-
-            replace_nth_char(&mut result, *position, replace_char);
+            if let Some(ch) = result.chars().nth(*position) {
+                let replace_char = add_modification_char(ch, modification);
+                replace_nth_char(&mut result, *position, replace_char);
+            }
         }
 
         if let Some(tone_mark) = &self.tone_mark {
             let tone_mark_position = get_tone_mark_placement(&result, &self.accent_style);
-            let ch = result.chars().nth(tone_mark_position).unwrap();
-            let replace_char = add_tone_char(ch, tone_mark);
-            replace_nth_char(&mut result, tone_mark_position, replace_char);
+            if let Some(ch) = result.chars().nth(tone_mark_position) {
+                let replace_char = add_tone_char(ch, tone_mark);
+                replace_nth_char(&mut result, tone_mark_position, replace_char);
+            }
         }
 
-        write!(f, "{}", result)
+        write!(f, "{result}")
     }
 }
 
@@ -278,6 +293,7 @@ impl From<String> for Syllable {
 // Implementations for ComplexSyllable (optimized for words with many modifications)
 impl ComplexSyllable {
     /// Creates a new complex syllable from a string.
+    #[must_use]
     pub fn new(input: &str) -> Self {
         let mut syllable = Self::default();
         syllable.set(input.to_string());
@@ -286,6 +302,7 @@ impl ComplexSyllable {
 
     /// The length of the syllable in characters (not bytes).
     #[inline]
+    #[must_use]
     pub fn len(&self) -> usize {
         self.initial_consonant.chars().count()
             + self.vowel.chars().count()
@@ -294,6 +311,7 @@ impl ComplexSyllable {
 
     /// Indicates whether the syllable has no initial consonant, vowel, or final consonant.
     #[inline]
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.initial_consonant.is_empty()
             && self.vowel.is_empty()
@@ -302,7 +320,12 @@ impl ComplexSyllable {
 
     /// Set a new value for the current syllable.
     pub fn set(&mut self, raw: String) {
-        let (_, syllable) = parse_syllable(&raw).unwrap();
+        let (_, syllable) = parse_syllable(&raw)
+            .unwrap_or_else(|_| ("", SyllableComponents {
+                initial_consonant: "",
+                vowel: &raw,
+                final_consonant: "",
+            }));
         self.initial_consonant = syllable.initial_consonant.chars().map(clean_char).collect();
         self.vowel = syllable.vowel.chars().map(clean_char).collect();
         self.final_consonant = syllable.final_consonant.to_string();
@@ -312,6 +335,7 @@ impl ComplexSyllable {
     }
 
     /// Indicate whether a modification exist in the syllable
+    #[must_use]
     pub fn contains_modification(&self, modification: &LetterModification) -> bool {
         self.letter_modifications
             .iter()
@@ -327,26 +351,28 @@ impl Display for ComplexSyllable {
         );
 
         for (position, modification) in &self.letter_modifications {
-            let ch = result.chars().nth(*position).unwrap();
-            let replace_char = add_modification_char(ch, modification);
-
-            replace_nth_char(&mut result, *position, replace_char);
+            if let Some(ch) = result.chars().nth(*position) {
+                let replace_char = add_modification_char(ch, modification);
+                replace_nth_char(&mut result, *position, replace_char);
+            }
         }
 
         if let Some(tone_mark) = &self.tone_mark {
             let tone_mark_position = get_tone_mark_placement(&result, &self.accent_style);
-            let ch = result.chars().nth(tone_mark_position).unwrap();
-            let replace_char = add_tone_char(ch, tone_mark);
-            replace_nth_char(&mut result, tone_mark_position, replace_char);
+            if let Some(ch) = result.chars().nth(tone_mark_position) {
+                let replace_char = add_tone_char(ch, tone_mark);
+                replace_nth_char(&mut result, tone_mark_position, replace_char);
+            }
         }
 
-        write!(f, "{}", result)
+        write!(f, "{result}")
     }
 }
 
 // Implementations for SimpleSyllable (optimized for words with few modifications)
 impl SimpleSyllable {
     /// Creates a new simple syllable from a string.
+    #[must_use]
     pub fn new(input: &str) -> Self {
         let mut syllable = Self::default();
         syllable.set(input.to_string());
@@ -355,6 +381,7 @@ impl SimpleSyllable {
 
     /// The length of the syllable in characters (not bytes).
     #[inline]
+    #[must_use]
     pub fn len(&self) -> usize {
         self.initial_consonant.chars().count()
             + self.vowel.chars().count()
@@ -363,6 +390,7 @@ impl SimpleSyllable {
 
     /// Indicates whether the syllable has no initial consonant, vowel, or final consonant.
     #[inline]
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.initial_consonant.is_empty()
             && self.vowel.is_empty()
@@ -371,7 +399,12 @@ impl SimpleSyllable {
 
     /// Set a new value for the current syllable.
     pub fn set(&mut self, raw: String) {
-        let (_, syllable) = parse_syllable(&raw).unwrap();
+        let (_, syllable) = parse_syllable(&raw)
+            .unwrap_or_else(|_| ("", SyllableComponents {
+                initial_consonant: "",
+                vowel: &raw,
+                final_consonant: "",
+            }));
         self.initial_consonant = syllable.initial_consonant.chars().map(clean_char).collect();
         self.vowel = syllable.vowel.chars().map(clean_char).collect();
         self.final_consonant = syllable.final_consonant.to_string();
@@ -381,6 +414,7 @@ impl SimpleSyllable {
     }
 
     /// Indicate whether a modification exist in the syllable
+    #[must_use]
     pub fn contains_modification(&self, modification: &LetterModification) -> bool {
         self.letter_modifications
             .iter()
@@ -396,19 +430,20 @@ impl Display for SimpleSyllable {
         );
 
         for (position, modification) in &self.letter_modifications {
-            let ch = result.chars().nth(*position).unwrap();
-            let replace_char = add_modification_char(ch, modification);
-
-            replace_nth_char(&mut result, *position, replace_char);
+            if let Some(ch) = result.chars().nth(*position) {
+                let replace_char = add_modification_char(ch, modification);
+                replace_nth_char(&mut result, *position, replace_char);
+            }
         }
 
         if let Some(tone_mark) = &self.tone_mark {
             let tone_mark_position = get_tone_mark_placement(&result, &self.accent_style);
-            let ch = result.chars().nth(tone_mark_position).unwrap();
-            let replace_char = add_tone_char(ch, tone_mark);
-            replace_nth_char(&mut result, tone_mark_position, replace_char);
+            if let Some(ch) = result.chars().nth(tone_mark_position) {
+                let replace_char = add_tone_char(ch, tone_mark);
+                replace_nth_char(&mut result, tone_mark_position, replace_char);
+            }
         }
 
-        write!(f, "{}", result)
+        write!(f, "{result}")
     }
 }

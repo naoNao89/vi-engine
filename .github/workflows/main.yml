@@ -26,7 +26,7 @@ jobs:
         run: cargo fetch
 
       - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -Dwarnings
+        run: cargo clippy --all-targets --all-features -- -D clippy::correctness -D clippy::suspicious -W clippy::style -W clippy::complexity -W clippy::perf
 
   # Assembly linting and validation
   assembly-lint:

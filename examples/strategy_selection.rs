@@ -42,8 +42,8 @@ fn demo_automatic_selection() -> Result<(), AssemblyError> {
     let input = "Tiếng Việt tự động";
     let result = processor.process_string(input)?;
 
-    println!("  Input: {}", input);
-    println!("  Output: {}", result);
+    println!("  Input: {input}");
+    println!("  Output: {result}");
     println!("  Strategy: {}", processor.processor_name());
     println!("  Preference: {:?}", processor.optimization_preference());
 
@@ -60,8 +60,8 @@ fn demo_force_rust_only() -> Result<(), AssemblyError> {
     let input = "Chỉ sử dụng Rust";
     let result = processor.process_string(input)?;
 
-    println!("  Input: {}", input);
-    println!("  Output: {}", result);
+    println!("  Input: {input}");
+    println!("  Output: {result}");
     println!("  Strategy: {}", processor.processor_name());
     println!("  Preference: {:?}", processor.optimization_preference());
 
@@ -86,13 +86,13 @@ fn demo_force_assembly() -> Result<(), AssemblyError> {
             let input = "Sử dụng assembly";
             let result = processor.process_string(input)?;
 
-            println!("  Input: {}", input);
-            println!("  Output: {}", result);
+            println!("  Input: {input}");
+            println!("  Output: {result}");
             println!("  Strategy: {}", processor.processor_name());
             println!("  ✅ Assembly processing available and used");
         }
         Err(e) => {
-            println!("  ❌ Assembly processing not available: {}", e);
+            println!("  ❌ Assembly processing not available: {e}");
             println!("  This is normal on platforms without assembly optimizations");
         }
     }
@@ -107,8 +107,8 @@ fn demo_prefer_rust() -> Result<(), AssemblyError> {
     let input = "Ưu tiên Rust";
     let result = processor.process_string(input)?;
 
-    println!("  Input: {}", input);
-    println!("  Output: {}", result);
+    println!("  Input: {input}");
+    println!("  Output: {result}");
     println!("  Strategy: {}", processor.processor_name());
     println!("  Preference: {:?}", processor.optimization_preference());
 
@@ -133,15 +133,15 @@ fn demo_force_specific_strategy() -> Result<(), AssemblyError> {
                 let input = "Chiến lược cụ thể";
                 let result = processor.process_string(input)?;
 
-                println!("  Strategy {:?}:", strategy);
-                println!("    Input: {}", input);
-                println!("    Output: {}", result);
+                println!("  Strategy {strategy:?}:");
+                println!("    Input: {input}");
+                println!("    Output: {result}");
                 println!("    Processor: {}", processor.processor_name());
                 println!("    ✅ Available and working");
             }
             Err(e) => {
-                println!("  Strategy {:?}:", strategy);
-                println!("    ❌ Not available: {}", e);
+                println!("  Strategy {strategy:?}:");
+                println!("    ❌ Not available: {e}");
             }
         }
     }
@@ -170,7 +170,7 @@ fn demo_strategy_availability() -> Result<(), AssemblyError> {
 
         if !profile.available {
             if let Some(reason) = &profile.unavailable_reason {
-                println!("      Reason: {}", reason);
+                println!("      Reason: {reason}");
             }
         }
     }

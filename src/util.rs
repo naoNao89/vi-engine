@@ -15,6 +15,7 @@
 /// assert_eq!(clean_char('ự'), 'u');
 /// ```
 #[inline]
+#[must_use]
 pub const fn clean_char(ch: char) -> char {
     match ch {
         // Lowercase a family
@@ -97,6 +98,7 @@ pub fn clean_string(input: &str) -> String {
 /// assert!(!is_vowel('b'));
 /// ```
 #[inline]
+#[must_use]
 pub const fn is_vowel(c: char) -> bool {
     // For const fn, we need to use a simpler approach
     matches!(

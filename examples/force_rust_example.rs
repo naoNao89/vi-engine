@@ -55,8 +55,8 @@ fn simple_force_rust() -> Result<(), AssemblyError> {
     let input = "Tiếng Việt đơn giản";
     let result = processor.process_string(input)?;
 
-    println!("  Input:  {}", input);
-    println!("  Output: {}", result);
+    println!("  Input:  {input}");
+    println!("  Output: {result}");
     println!("  Strategy: {}", processor.processor_name());
 
     // Verify it's actually using Rust
@@ -87,8 +87,8 @@ fn force_rust_with_config() -> Result<(), AssemblyError> {
     let input = "Cấu hình nâng cao cho Rust";
     let result = processor.process_string(input)?;
 
-    println!("  Input:  {}", input);
-    println!("  Output: {}", result);
+    println!("  Input:  {input}");
+    println!("  Output: {result}");
     println!("  Strategy: {}", processor.processor_name());
     println!("  Preference: {:?}", processor.optimization_preference());
 
@@ -122,15 +122,15 @@ fn force_specific_rust_strategy() -> Result<(), AssemblyError> {
     // Test RustOptimized
     let result_optimized = processor_optimized.process_string(input)?;
     println!("  RustOptimized:");
-    println!("    Input:  {}", input);
-    println!("    Output: {}", result_optimized);
+    println!("    Input:  {input}");
+    println!("    Output: {result_optimized}");
     println!("    Strategy: {}", processor_optimized.processor_name());
 
     // Test RustStandard
     let result_standard = processor_standard.process_string(input)?;
     println!("  RustStandard:");
-    println!("    Input:  {}", input);
-    println!("    Output: {}", result_standard);
+    println!("    Input:  {input}");
+    println!("    Output: {result_standard}");
     println!("    Strategy: {}", processor_standard.processor_name());
 
     // Both should produce the same result
@@ -151,8 +151,8 @@ fn prefer_rust_example() -> Result<(), AssemblyError> {
     let input = "Ưu tiên sử dụng Rust";
     let result = processor.process_string(input)?;
 
-    println!("  Input:  {}", input);
-    println!("  Output: {}", result);
+    println!("  Input:  {input}");
+    println!("  Output: {result}");
     println!("  Strategy: {}", processor.processor_name());
     println!("  Preference: {:?}", processor.optimization_preference());
 
@@ -188,16 +188,16 @@ fn verify_rust_only() -> Result<(), AssemblyError> {
 
     for input in &test_cases {
         let result = processor.process_string(input)?;
-        println!("    '{}' → '{}'", input, result);
+        println!("    '{input}' → '{result}'");
     }
 
     // Verify strategy
     let strategy = processor.selected_strategy();
-    println!("  Selected Strategy: {:?}", strategy);
+    println!("  Selected Strategy: {strategy:?}");
 
     // Verify preference
     let preference = processor.optimization_preference();
-    println!("  Optimization Preference: {:?}", preference);
+    println!("  Optimization Preference: {preference:?}");
 
     // Check performance stats
     let stats = processor.stats();
@@ -238,14 +238,14 @@ fn performance_comparison() -> Result<(), AssemblyError> {
         .build()?;
     let rust_result = rust_processor.process_string(test_text)?;
 
-    println!("  Test text: {}", test_text);
+    println!("  Test text: {test_text}");
     println!("  Automatic selection:");
     println!("    Strategy: {}", auto_processor.processor_name());
-    println!("    Result: {}", auto_result);
+    println!("    Result: {auto_result}");
 
     println!("  Forced Rust:");
     println!("    Strategy: {}", rust_processor.processor_name());
-    println!("    Result: {}", rust_result);
+    println!("    Result: {rust_result}");
     println!(
         "    Rate: {:.0} chars/sec",
         rust_processor.avg_processing_rate()

@@ -63,7 +63,7 @@ fn main() {
 
     for input in &test_strings {
         let output = vi::clean_string(input);
-        println!("'{}' -> '{}'", input, output);
+        println!("'{input}' -> '{output}'");
     }
 
     println!("\n=== Assembly Status Summary ===");

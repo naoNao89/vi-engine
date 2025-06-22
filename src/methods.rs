@@ -361,10 +361,12 @@ impl<'def> IncrementalBuffer<'def> {
         }
 
         let fallback = format!("{}{ch}", self.syllable);
-        let actions = self.definition.get(&lowercase_ch).unwrap();
+        // SAFETY: We already checked contains_key above, so this key exists
+        let actions = self.definition.get(&lowercase_ch).expect("Key should exist after contains_key check");
 
         let mut action_iter = actions.iter();
-        let mut action = action_iter.next().unwrap();
+        // SAFETY: Action slices in definitions are never empty
+        let mut action = action_iter.next().expect("Action slice should never be empty");
 
         let mut char_result = TransformResult {
             tone_mark_removed: false,

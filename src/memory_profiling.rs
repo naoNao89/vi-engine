@@ -31,6 +31,7 @@ pub struct MemoryStats {
 
 impl MemoryStats {
     /// Create new empty memory statistics
+    #[must_use]
     pub fn new() -> Self {
         Self {
             total_allocated: 0,
@@ -48,6 +49,7 @@ impl MemoryStats {
     }
 
     /// Calculate memory efficiency (deallocated / allocated)
+    #[must_use]
     pub fn efficiency(&self) -> f64 {
         if self.total_allocated == 0 {
             1.0
@@ -57,6 +59,7 @@ impl MemoryStats {
     }
 
     /// Calculate fragmentation ratio (current / peak)
+    #[must_use]
     pub fn fragmentation_ratio(&self) -> f64 {
         if self.peak_usage == 0 {
             0.0
@@ -86,6 +89,7 @@ pub struct MemoryProfiler {
 
 impl MemoryProfiler {
     /// Create new memory profiler
+    #[must_use]
     pub fn new() -> Self {
         Self {
             total_allocated: AtomicUsize::new(0),
@@ -264,6 +268,7 @@ impl MemoryProfilerUtils {
     }
 
     /// Format memory statistics for display
+    #[must_use]
     pub fn format_memory_stats(stats: &MemoryStats) -> String {
         format!(
             "Memory Stats:\n\
@@ -321,6 +326,7 @@ impl Default for ScopedMemoryProfiler {
 
 impl ScopedMemoryProfiler {
     /// Create new scoped profiler and enable profiling
+    #[must_use]
     pub fn new() -> Self {
         let was_enabled = MemoryProfilerUtils::is_profiling_enabled();
         MemoryProfilerUtils::enable_profiling();
@@ -328,6 +334,7 @@ impl ScopedMemoryProfiler {
     }
 
     /// Get current memory statistics
+    #[must_use]
     pub fn get_stats(&self) -> MemoryStats {
         MemoryProfilerUtils::get_memory_stats()
     }

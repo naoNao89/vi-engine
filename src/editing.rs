@@ -27,8 +27,14 @@ const SPECIAL_VOWEL_PAIRS: [&str; 6] = ["oa", "oe", "oo", "uy", "uo", "ie"];
 /// Otherwise:
 /// - 3. If a vowel has 2 characters, put the tone mark on the first one
 /// - 4. Otherwise, put the tone mark on the second vowel character
+///
+/// Returns 0 if the syllable cannot be parsed.
+#[must_use]
 pub fn get_tone_mark_placement(raw_syllable: &str, accent_style: &AccentStyle) -> usize {
-    let (_, syllable) = parse_syllable(raw_syllable).unwrap();
+    let (_, syllable) = match parse_syllable(raw_syllable) {
+        Ok(result) => result,
+        Err(_) => return 0, // Return 0 if parsing fails
+    };
     let vowel = &syllable.vowel;
     let vowel_len = vowel.chars().count();
     let vowel_index = syllable.initial_consonant.chars().count();
@@ -98,6 +104,7 @@ pub fn replace_nth_char(input: &mut String, replace_index: usize, replace_ch: ch
 
 /// Add tone mark to input character.
 /// Return a new char with the tone mark.
+#[must_use]
 pub fn add_tone_char(ch: char, tone_mark: &ToneMark) -> char {
     let tone_mark_map = match tone_mark {
         ToneMark::Acute => &ACCUTE_MAP,
@@ -111,6 +118,7 @@ pub fn add_tone_char(ch: char, tone_mark: &ToneMark) -> char {
 
 /// Add modification to input character.
 /// Return a modified character.
+#[must_use]
 pub fn add_modification_char(ch: char, modification: &LetterModification) -> char {
     let modification_map = match modification {
         LetterModification::Breve => &BREVE_MAP,
@@ -132,6 +140,8 @@ pub fn add_modification_char(ch: char, modification: &LetterModification) -> cha
 ///    b. if the vowel is uo & only the initial consonant is present, then it's on the o
 ///    c. if the vowel is uo, uoi or uou, then it's on the first two chars
 ///    d. if the vowel contains u then it's on u, otherwise if it contains o then it's on o
+///
+#[must_use]
 pub fn get_modification_positions(
     syllable: &Syllable,
     modification: &LetterModification,
@@ -155,8 +165,11 @@ pub fn get_modification_positions(
             return Vec::new();
         }
 
-        let index = *indexes.first().unwrap();
-        return vec![vowel_index + index];
+        if let Some(&index) = indexes.first() {
+            return vec![vowel_index + index];
+        } else {
+            return Vec::new();
+        }
     }
 
     if let LetterModification::Breve = modification {

@@ -51,7 +51,7 @@ async fn test_async_processor_creation() {
             println!("Async processor creation cancelled (acceptable for test)");
         }
         Err(e) => {
-            panic!("Unexpected error in processor creation test: {:?}", e);
+            panic!("Unexpected error in processor creation test: {e:?}");
         }
     }
 }
@@ -76,7 +76,7 @@ async fn test_async_vietnamese_character_processing() {
 
     for (input, expected) in test_cases {
         let result = processor.process_string_safe(input).await.unwrap();
-        assert_eq!(result, expected, "Failed for input: {}", input);
+        assert_eq!(result, expected, "Failed for input: {input}");
     }
 }
 
@@ -97,7 +97,7 @@ async fn test_async_empty_input_handling() {
             println!("Empty string processing cancelled (acceptable for test)");
         }
         Err(e) => {
-            panic!("Unexpected error processing empty string: {:?}", e);
+            panic!("Unexpected error processing empty string: {e:?}");
         }
     }
 
@@ -113,7 +113,7 @@ async fn test_async_empty_input_handling() {
             println!("Empty char array processing cancelled (acceptable for test)");
         }
         Err(e) => {
-            panic!("Unexpected error processing empty char array: {:?}", e);
+            panic!("Unexpected error processing empty char array: {e:?}");
         }
     }
 }
@@ -132,7 +132,7 @@ async fn test_async_large_input_processing() {
         Ok(output) => assert_eq!(output, expected),
         Err(e) => {
             // If cancelled due to previous test state, that's acceptable for this test
-            println!("Large input test result: {}", e);
+            println!("Large input test result: {e}");
             assert!(matches!(
                 e,
                 AssemblyError::Cancelled | AssemblyError::Timeout
@@ -166,7 +166,7 @@ async fn test_async_timeout_protection() {
             println!("Operation cancelled (acceptable for test)");
         }
         Err(e) => {
-            panic!("Unexpected error: {:?}", e);
+            panic!("Unexpected error: {e:?}");
         }
     }
 }
@@ -202,10 +202,11 @@ async fn test_async_cancellation() {
             println!("Async cancellation working correctly");
         }
         Ok(Ok(Err(e))) => {
-            println!("Processing failed with error: {}", e);
+            println!("Processing failed with error: {e}");
         }
         Ok(Err(_)) => {
             // Task panicked
+            #[allow(clippy::panic)]
             panic!("Task panicked");
         }
         Err(_) => {
@@ -246,7 +247,8 @@ async fn test_async_cancellation_token() {
             println!("Processing completed before cancellation");
         }
         Err(e) => {
-            panic!("Unexpected error: {:?}", e);
+            #[allow(clippy::panic)]
+            panic!("Unexpected error: {e:?}");
         }
     }
 }
@@ -261,7 +263,7 @@ async fn test_async_concurrent_processing() {
     for i in 0..5 {
         let processor_clone = processor.clone();
         let handle = tokio::spawn(async move {
-            let input = format!("test{}", i).repeat(1000);
+            let input = format!("test{i}").repeat(1000);
             processor_clone.process_string_safe(&input).await
         });
         handles.push(handle);
@@ -281,14 +283,14 @@ async fn test_async_concurrent_processing() {
         match handle.await.unwrap() {
             Ok(_) => completed += 1,
             Err(AssemblyError::Cancelled) => cancelled += 1,
-            Err(e) => panic!("Unexpected error: {:?}", e),
+            Err(e) => {
+                #[allow(clippy::panic)]
+                panic!("Unexpected error: {e:?}")
+            }
         }
     }
 
-    println!(
-        "Async concurrent test: {} completed, {} cancelled",
-        completed, cancelled
-    );
+    println!("Async concurrent test: {completed} completed, {cancelled} cancelled");
     // At least some should be cancelled or completed
     assert!(completed + cancelled == 5);
 }
@@ -322,7 +324,7 @@ async fn test_async_watchdog_custom_config() {
         enabled: true,
     };
 
-    let processor = AsyncSafeAssemblyProcessor::with_watchdog_config(config.clone());
+    let processor = AsyncSafeAssemblyProcessor::with_watchdog_config(config);
     assert!(processor.has_watchdog());
 
     let actual_config = processor.watchdog_config().unwrap();
@@ -349,7 +351,8 @@ async fn test_async_metrics_collection() {
             println!("First operation cancelled (acceptable for test)");
         }
         Err(e) => {
-            panic!("Unexpected error in first operation: {:?}", e);
+            #[allow(clippy::panic)]
+            panic!("Unexpected error in first operation: {e:?}");
         }
     }
 
@@ -363,7 +366,8 @@ async fn test_async_metrics_collection() {
             println!("Second operation cancelled (acceptable for test)");
         }
         Err(e) => {
-            panic!("Unexpected error in second operation: {:?}", e);
+            #[allow(clippy::panic)]
+            panic!("Unexpected error in second operation: {e:?}");
         }
     }
 
@@ -380,17 +384,14 @@ async fn test_async_metrics_collection() {
         .operations_completed
         .load(std::sync::atomic::Ordering::Relaxed);
     println!(
-        "Debug: operations_started={}, operations_completed={}, successful_operations={}",
-        started, completed, successful_operations
+        "Debug: operations_started={started}, operations_completed={completed}, successful_operations={successful_operations}"
     );
 
     // Should have recorded operations (at least the attempts)
     if successful_operations > 0 {
         assert!(
             started >= successful_operations as u64,
-            "Expected at least {} operations started, got {}",
-            successful_operations,
-            started
+            "Expected at least {successful_operations} operations started, got {started}"
         );
         assert!(
             metrics.get_success_rate() >= 0.0,
@@ -421,7 +422,8 @@ async fn test_async_error_handling() {
             println!("Processing completed despite cancellation");
         }
         Err(e) => {
-            panic!("Unexpected error: {:?}", e);
+            #[allow(clippy::panic)]
+            panic!("Unexpected error: {e:?}");
         }
     }
 }

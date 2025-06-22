@@ -26,8 +26,8 @@ fn main() {
         let input_u32: Vec<u32> = input_chars.iter().map(|&c| c as u32).collect();
         let mut output_u32 = vec![0u32; input_chars.len()];
 
-        println!("Input characters: {:?}", input_chars);
-        println!("Input as u32: {:?}", input_u32);
+        println!("Input characters: {input_chars:?}");
+        println!("Input as u32: {input_u32:?}");
         println!("Input length: {}", input_u32.len());
 
         unsafe {
@@ -37,15 +37,15 @@ fn main() {
                 input_u32.len(),
             );
 
-            println!("Assembly returned processed count: {}", processed);
-            println!("Output as u32: {:?}", output_u32);
+            println!("Assembly returned processed count: {processed}");
+            println!("Output as u32: {output_u32:?}");
 
             if processed <= input_u32.len() {
                 let output_chars: Vec<char> = output_u32[..processed]
                     .iter()
                     .map(|&u| char::from_u32(u).unwrap_or('?'))
                     .collect();
-                println!("Output characters: {:?}", output_chars);
+                println!("Output characters: {output_chars:?}");
             } else {
                 println!("ERROR: Assembly returned invalid count!");
             }

@@ -20,19 +20,20 @@ fn main() {
 
         // Test direct assembly call
         let test_char = 'ế' as u32;
-        println!(
-            "Testing character: '{}' (U+{:04X})",
-            char::from_u32(test_char).unwrap(),
-            test_char
-        );
+        match char::from_u32(test_char) {
+            Some(ch) => println!("Testing character: '{}' (U+{:04X})", ch, test_char),
+            None => {
+                println!("Invalid test character: U+{:04X}", test_char);
+                return;
+            }
+        }
 
         unsafe {
             let result = apple_hybrid_clean_char_optimized(test_char);
-            println!(
-                "Assembly result: '{}' (U+{:04X})",
-                char::from_u32(result).unwrap(),
-                result
-            );
+            match char::from_u32(result) {
+                Some(ch) => println!("Assembly result: '{}' (U+{:04X})", ch, result),
+                None => println!("Assembly returned invalid Unicode: U+{:04X}", result),
+            }
         }
     }
 

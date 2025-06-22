@@ -12,7 +12,10 @@
 //! - Performance monitoring with minimal overhead
 
 use once_cell::sync::Lazy;
-use signal_hook::{consts::*, iterator::Signals};
+use signal_hook::{
+    consts::{SIGINT, SIGQUIT, SIGTERM},
+    iterator::Signals,
+};
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -23,7 +26,7 @@ pub static GLOBAL_ASSEMBLY_CONTROL: Lazy<Arc<AssemblyControl>> =
     Lazy::new(|| Arc::new(AssemblyControl::new()));
 
 /// Assembly control structure for coordinating between Rust and assembly code
-/// Cache-line aligned for optimal performance on Apple Silicon and x86_64
+/// Cache-line aligned for optimal performance on Apple Silicon and `x86_64`
 #[repr(C, align(64))]
 pub struct AssemblyControl {
     /// Cooperative cancellation flag - checked by assembly loops
@@ -46,6 +49,7 @@ pub struct AssemblyControl {
 
 impl AssemblyControl {
     /// Create new assembly control structure
+    #[must_use]
     pub fn new() -> Self {
         Self {
             cancel_flag: AtomicBool::new(false),
@@ -175,7 +179,7 @@ impl std::fmt::Display for AssemblyError {
             }
             AssemblyError::Panic => write!(f, "Panic occurred during assembly operation"),
             AssemblyError::InvalidInput => write!(f, "Invalid input parameters"),
-            AssemblyError::ExecutionError(msg) => write!(f, "Assembly execution error: {}", msg),
+            AssemblyError::ExecutionError(msg) => write!(f, "Assembly execution error: {msg}"),
         }
     }
 }
@@ -203,6 +207,7 @@ pub struct SafetyMetrics {
 
 impl SafetyMetrics {
     /// Creates a new safety metrics instance with all counters initialized to zero
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -240,7 +245,19 @@ impl SafetyMetrics {
             return 1.0;
         }
         let completed = self.operations_completed.load(Ordering::Relaxed);
-        completed as f64 / started as f64
+        {
+            let completed_f64 = if completed > (1u64 << 53) {
+                (1u64 << 53) as f64
+            } else {
+                completed as f64
+            };
+            let started_f64 = if started > (1u64 << 53) {
+                (1u64 << 53) as f64
+            } else {
+                started as f64
+            };
+            completed_f64 / started_f64
+        }
     }
 
     /// Gets the average safety overhead per operation in nanoseconds.
@@ -275,7 +292,7 @@ impl SafetyMetrics {
         }
     }
 
-    /// Gets memory statistics as (total_allocations, peak_usage).
+    /// Gets memory statistics as (`total_allocations`, `peak_usage`).
     #[must_use = "Memory statistics should be used for monitoring or diagnostics"]
     pub fn get_memory_stats(&self) -> (u64, u64) {
         (
@@ -383,7 +400,7 @@ impl AssemblyWatchdog {
                         let elapsed_ms = (now - start_time) / 1_000_000;
 
                         if elapsed_ms > timeout_ms {
-                            log::debug!("Watchdog detected timeout after {}ms", elapsed_ms);
+                            log::debug!("Watchdog detected timeout after {elapsed_ms}ms");
                             control.timeout_flag.store(true, Ordering::SeqCst);
                             control.cancel_flag.store(true, Ordering::SeqCst);
                             continue;
@@ -394,11 +411,7 @@ impl AssemblyWatchdog {
                     let current_heartbeat = control.heartbeat.load(Ordering::Relaxed);
                     let now = Instant::now();
 
-                    if current_heartbeat != last_heartbeat {
-                        // Heartbeat updated, operation is making progress
-                        last_heartbeat = current_heartbeat;
-                        last_heartbeat_time = now;
-                    } else {
+                    if current_heartbeat == last_heartbeat {
                         // Check if we've been tracking this heartbeat long enough
                         if last_heartbeat > 0
                             && now.duration_since(last_heartbeat_time).as_millis() as u64
@@ -418,16 +431,17 @@ impl AssemblyWatchdog {
                             last_heartbeat = current_heartbeat;
                             last_heartbeat_time = now;
                         }
+                    } else {
+                        // Heartbeat updated, operation is making progress
+                        last_heartbeat = current_heartbeat;
+                        last_heartbeat_time = now;
                     }
                 }
 
                 log::debug!("Assembly watchdog thread stopped");
             })
             .unwrap_or_else(|e| {
-                log::warn!(
-                    "Failed to spawn watchdog thread: {}. Continuing without watchdog.",
-                    e
-                );
+                log::warn!("Failed to spawn watchdog thread: {e}. Continuing without watchdog.");
                 // Return a dummy handle that immediately finishes
                 thread::spawn(|| {})
             })
@@ -442,11 +456,13 @@ impl AssemblyWatchdog {
     }
 
     /// Check if watchdog is enabled
+    #[must_use]
     pub fn is_enabled(&self) -> bool {
         self.config.enabled
     }
 
     /// Get watchdog configuration
+    #[must_use]
     pub fn config(&self) -> &WatchdogConfig {
         &self.config
     }
@@ -520,7 +536,7 @@ fn setup_signal_handling() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(sig) = signals.forever().next() {
                     match sig {
                         SIGINT | SIGTERM | SIGQUIT => {
-                            log::warn!("Received signal {}, stopping assembly operations", sig);
+                            log::warn!("Received signal {sig}, stopping assembly operations");
                             GLOBAL_ASSEMBLY_CONTROL
                                 .cancel_flag
                                 .store(true, Ordering::SeqCst);
@@ -536,10 +552,7 @@ fn setup_signal_handling() -> Result<(), Box<dyn std::error::Error>> {
         }) {
         Ok(_) => Ok(()),
         Err(e) => {
-            log::warn!(
-                "Failed to spawn signal handler thread: {}. Signal handling disabled.",
-                e
-            );
+            log::warn!("Failed to spawn signal handler thread: {e}. Signal handling disabled.");
             Ok(()) // Don't fail initialization if signal handling can't be set up
         }
     }
@@ -573,6 +586,7 @@ impl SafeAssemblyProcessor {
     }
 
     /// Create safe processor with custom timeout
+    #[must_use]
     pub fn with_timeout(timeout_ms: u64) -> Self {
         let processor = Self::new();
         processor
@@ -723,6 +737,7 @@ impl SafeAssemblyProcessor {
     }
 
     /// Get safety metrics
+    #[must_use]
     pub fn get_metrics(&self) -> &SafetyMetrics {
         &self.metrics
     }
@@ -733,13 +748,15 @@ impl SafeAssemblyProcessor {
     }
 
     /// Check if watchdog is enabled
+    #[must_use]
     pub fn has_watchdog(&self) -> bool {
         self.watchdog.is_some()
     }
 
     /// Get watchdog configuration if enabled
+    #[must_use]
     pub fn watchdog_config(&self) -> Option<&WatchdogConfig> {
-        self.watchdog.as_ref().map(|w| w.config())
+        self.watchdog.as_ref().map(AssemblyWatchdog::config)
     }
 }
 

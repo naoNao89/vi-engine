@@ -305,8 +305,7 @@ impl VietnameseTextProcessor {
                     .as_deref()
                     .unwrap_or("Strategy not available on this platform");
                 return Err(AssemblyError::ExecutionError(format!(
-                    "Strategy {:?} not available: {}",
-                    strategy, reason
+                    "Strategy {strategy:?} not available: {reason}"
                 )));
             }
         }
@@ -476,7 +475,14 @@ impl VietnameseTextProcessor {
 
         // Calculate instantaneous processing rate
         if elapsed.as_nanos() > 0 {
-            let rate = (char_count as f64) / elapsed.as_secs_f64();
+            let rate = {
+                let char_count_f64 = if char_count > (1u64 << 53) as usize {
+                    (1u64 << 53) as f64
+                } else {
+                    char_count as f64
+                };
+                char_count_f64 / elapsed.as_secs_f64()
+            };
             if rate > self.stats.peak_processing_rate {
                 self.stats.peak_processing_rate = rate;
             }
@@ -488,8 +494,17 @@ impl VietnameseTextProcessor {
     /// Update derived statistics
     fn update_derived_stats(&mut self) {
         if self.stats.total_chars_processed > 0 {
-            self.stats.avg_time_per_char_ns = self.stats.total_processing_time_ns as f64
-                / self.stats.total_chars_processed as f64;
+            let time_ns_f64 = if self.stats.total_processing_time_ns > (1u64 << 53) {
+                (1u64 << 53) as f64
+            } else {
+                self.stats.total_processing_time_ns as f64
+            };
+            let chars_f64 = if self.stats.total_chars_processed > (1u64 << 53) {
+                (1u64 << 53) as f64
+            } else {
+                self.stats.total_chars_processed as f64
+            };
+            self.stats.avg_time_per_char_ns = time_ns_f64 / chars_f64;
         }
     }
 
@@ -518,26 +533,38 @@ impl VietnameseTextProcessor {
             performance_info.strategy,
             preference,
             self.cpu_info().performance_description(),
-            performance_info.estimated_throughput as f64 / 1_000_000.0
+            {
+                let throughput = performance_info.estimated_throughput;
+                let throughput_f64 = if throughput > (1u64 << 53) {
+                    (1u64 << 53) as f64
+                } else {
+                    throughput as f64
+                };
+                throughput_f64 / 1_000_000.0
+            }
         )
     }
 
     /// Get the optimization strategy that was actually selected
+    #[must_use]
     pub fn selected_strategy(&self) -> OptimizationStrategy {
         self.processor.performance_info().strategy.clone()
     }
 
     /// Get the user's optimization preference
+    #[must_use]
     pub fn optimization_preference(&self) -> &OptimizationPreference {
         &self.config.optimization_preference
     }
 
     /// Get CPU capabilities information
+    #[must_use]
     pub fn cpu_info(&self) -> &CpuCapabilities {
         OptimizationSelector::get().cpu_capabilities()
     }
 
     /// Get processor name for diagnostics
+    #[must_use]
     pub fn processor_name(&self) -> &str {
         self.processor.processor_name()
     }
@@ -548,32 +575,64 @@ impl VietnameseTextProcessor {
     }
 
     /// Get success rate as a percentage
+    #[must_use]
     pub fn success_rate(&self) -> f64 {
         let total_ops = self.stats.successful_operations + self.stats.failed_operations;
         if total_ops > 0 {
-            (self.stats.successful_operations as f64 / total_ops as f64) * 100.0
+            let successful_f64 = if self.stats.successful_operations > (1u64 << 53) {
+                (1u64 << 53) as f64
+            } else {
+                self.stats.successful_operations as f64
+            };
+            let total_f64 = if total_ops > (1u64 << 53) {
+                (1u64 << 53) as f64
+            } else {
+                total_ops as f64
+            };
+            (successful_f64 / total_f64) * 100.0
         } else {
             0.0
         }
     }
 
     /// Get average processing rate in characters per second
+    #[must_use]
     pub fn avg_processing_rate(&self) -> f64 {
         if self.stats.total_processing_time_ns > 0 {
-            let total_time_secs = self.stats.total_processing_time_ns as f64 / 1_000_000_000.0;
-            self.stats.total_chars_processed as f64 / total_time_secs
+            let time_ns_f64 = if self.stats.total_processing_time_ns > (1u64 << 53) {
+                (1u64 << 53) as f64
+            } else {
+                self.stats.total_processing_time_ns as f64
+            };
+            let total_time_secs = time_ns_f64 / 1_000_000_000.0;
+            let chars_f64 = if self.stats.total_chars_processed > (1u64 << 53) {
+                (1u64 << 53) as f64
+            } else {
+                self.stats.total_chars_processed as f64
+            };
+            chars_f64 / total_time_secs
         } else {
             0.0
         }
     }
 
     /// Check if processor is performing optimally
+    #[must_use]
     pub fn is_performing_optimally(&self) -> bool {
         let success_rate = self.success_rate();
         let fallback_rate = if self.stats.successful_operations + self.stats.failed_operations > 0 {
-            (self.stats.fallback_operations as f64
-                / (self.stats.successful_operations + self.stats.failed_operations) as f64)
-                * 100.0
+            let fallback_f64 = if self.stats.fallback_operations > (1u64 << 53) {
+                (1u64 << 53) as f64
+            } else {
+                self.stats.fallback_operations as f64
+            };
+            let total_ops = self.stats.successful_operations + self.stats.failed_operations;
+            let total_f64 = if total_ops > (1u64 << 53) {
+                (1u64 << 53) as f64
+            } else {
+                total_ops as f64
+            };
+            (fallback_f64 / total_f64) * 100.0
         } else {
             0.0
         };
@@ -584,6 +643,13 @@ impl VietnameseTextProcessor {
 
 impl Default for VietnameseTextProcessor {
     fn default() -> Self {
-        Self::new().expect("Failed to create default Vietnamese processor")
+        Self::new().unwrap_or_else(|_| {
+            // Fallback to a basic processor if initialization fails
+            VietnameseTextProcessor {
+                processor: Box::new(crate::optimization_selector::RustStandardProcessor::new()),
+                config: ProcessorConfig::default(),
+                stats: ProcessingStats::default(),
+            }
+        })
     }
 }

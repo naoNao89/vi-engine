@@ -30,14 +30,14 @@ fn benchmark_single_char_safety_overhead(c: &mut Criterion) {
                 safe_processor
                     .process_chars_safe(black_box(&input))
                     .unwrap_or_else(|e| {
-                        eprintln!("Warning: Safe processing failed: {}", e);
+                        eprintln!("Warning: Safe processing failed: {e}");
                         vec![ch] // Fallback to original character
                     })
-            })
+            });
         });
 
         group.bench_with_input(BenchmarkId::new("direct", ch), &ch, |b, &ch| {
-            b.iter(|| clean_char(black_box(ch)))
+            b.iter(|| clean_char(black_box(ch)));
         });
     }
 
@@ -70,14 +70,14 @@ fn benchmark_string_safety_overhead(c: &mut Criterion) {
                 safe_processor
                     .process_string_safe(black_box(s))
                     .unwrap_or_else(|e| {
-                        eprintln!("Warning: Safe processing failed: {}", e);
+                        eprintln!("Warning: Safe processing failed: {e}");
                         s.clone() // Fallback to original string
                     })
-            })
+            });
         });
 
         group.bench_with_input(BenchmarkId::new("direct", size), test_string, |b, s| {
-            b.iter(|| clean_string(black_box(s)))
+            b.iter(|| clean_string(black_box(s)));
         });
     }
 
@@ -103,17 +103,17 @@ fn benchmark_bulk_safety_overhead(c: &mut Criterion) {
                 safe_processor
                     .process_chars_safe(black_box(input))
                     .unwrap_or_else(|e| {
-                        eprintln!("Warning: Safe processing failed: {}", e);
+                        eprintln!("Warning: Safe processing failed: {e}");
                         input.clone() // Fallback to original input
                     })
-            })
+            });
         });
 
         group.bench_with_input(BenchmarkId::new("direct", size), &input, |b, input| {
             b.iter(|| {
                 let result: Vec<char> = input.iter().map(|&ch| clean_char(ch)).collect();
                 black_box(result)
-            })
+            });
         });
     }
 
@@ -140,7 +140,7 @@ fn benchmark_safety_check_overhead(c: &mut Criterion) {
                 }
                 black_box(i);
             }
-        })
+        });
     });
 }
 
@@ -162,7 +162,7 @@ fn benchmark_concurrent_safety_overhead(c: &mut Criterion) {
                     processor
                         .process_string_safe(&input_clone)
                         .unwrap_or_else(|e| {
-                            eprintln!("Warning: Concurrent processing failed: {}", e);
+                            eprintln!("Warning: Concurrent processing failed: {e}");
                             input_clone
                         })
                 });
@@ -172,7 +172,7 @@ fn benchmark_concurrent_safety_overhead(c: &mut Criterion) {
             for handle in handles {
                 black_box(handle.join().unwrap());
             }
-        })
+        });
     });
 }
 
@@ -197,10 +197,10 @@ fn benchmark_timeout_overhead(c: &mut Criterion) {
                     processor
                         .process_string_safe(black_box(input))
                         .unwrap_or_else(|e| {
-                            eprintln!("Warning: Timeout processing failed: {}", e);
+                            eprintln!("Warning: Timeout processing failed: {e}");
                             input.clone()
                         })
-                })
+                });
             },
         );
     }
@@ -220,12 +220,12 @@ fn benchmark_metrics_overhead(c: &mut Criterion) {
             let result = processor
                 .process_string_safe(black_box(input))
                 .unwrap_or_else(|e| {
-                    eprintln!("Warning: Metrics processing failed: {}", e);
+                    eprintln!("Warning: Metrics processing failed: {e}");
                     input.to_string()
                 });
             let metrics = processor.get_metrics();
             black_box((result, metrics.get_success_rate()));
-        })
+        });
     });
 }
 
@@ -251,11 +251,11 @@ fn benchmark_memory_allocation_patterns(c: &mut Criterion) {
                     let result = processor
                         .process_chars_safe(black_box(input))
                         .unwrap_or_else(|e| {
-                            eprintln!("Warning: Memory allocation processing failed: {}", e);
+                            eprintln!("Warning: Memory allocation processing failed: {e}");
                             input.clone()
                         });
                     black_box(result);
-                })
+                });
             },
         );
     }

@@ -51,12 +51,12 @@ fn display_system_info() {
     println!("  Score: {}", cpu_capabilities.performance_score);
 
     let optimization_info = OptimizationSelector::get().optimization_summary();
-    println!("  Optimization: {}", optimization_info);
+    println!("  Optimization: {optimization_info}");
 
     println!("  Available Features:");
     for (feature, available) in &cpu_capabilities.features {
         if *available {
-            println!("    ✓ {}", feature);
+            println!("    ✓ {feature}");
         }
     }
 }
@@ -78,7 +78,7 @@ fn simple_usage_example() -> Result<(), AssemblyError> {
     println!("Processing Vietnamese text:");
     for input in test_cases {
         let result = processor.process_string(input)?;
-        println!("  '{}' → '{}'", input, result);
+        println!("  '{input}' → '{result}'");
     }
 
     println!("Processor: {}", processor.processor_name());
@@ -100,8 +100,8 @@ fn advanced_configuration_example() -> Result<(), AssemblyError> {
     let input = "Đây là một ví dụ về xử lý văn bản tiếng Việt với cấu hình nâng cao";
     let result = processor.process_string(input)?;
 
-    println!("Input:  {}", input);
-    println!("Output: {}", result);
+    println!("Input:  {input}");
+    println!("Output: {result}");
 
     // Display configuration
     let config = processor.config();
@@ -185,15 +185,15 @@ fn error_handling_example() -> Result<(), AssemblyError> {
     // Process normal text (should succeed)
     let normal_text = "Văn bản bình thường";
     match processor.process_string(normal_text) {
-        Ok(result) => println!("  Success: '{}' → '{}'", normal_text, result),
-        Err(e) => println!("  Error: {}", e),
+        Ok(result) => println!("  Success: '{normal_text}' → '{result}'"),
+        Err(e) => println!("  Error: {e}"),
     }
 
     // Process empty string (should handle gracefully)
     let empty_text = "";
     match processor.process_string(empty_text) {
-        Ok(result) => println!("  Empty string handled: '{}'", result),
-        Err(e) => println!("  Error with empty string: {}", e),
+        Ok(result) => println!("  Empty string handled: '{result}'"),
+        Err(e) => println!("  Error with empty string: {e}"),
     }
 
     // Display fallback statistics
@@ -243,7 +243,7 @@ fn batch_processing_example() -> Result<(), AssemblyError> {
 
     // Display results
     for (original, processed) in batch_data.iter().zip(results.iter()) {
-        println!("  '{}' → '{}'", original, processed);
+        println!("  '{original}' → '{processed}'");
     }
 
     // Display batch statistics
@@ -252,12 +252,32 @@ fn batch_processing_example() -> Result<(), AssemblyError> {
     println!("  Total time: {:.2} ms", batch_time.as_millis());
     println!(
         "  Average time per item: {:.2} ms",
-        batch_time.as_millis() as f64 / batch_data.len() as f64
+        {
+            let millis = batch_time.as_millis();
+            let millis_f64 = if millis > (1u64 << 53) as u128 {
+                (1u64 << 53) as f64
+            } else {
+                millis as f64
+            };
+            let len_f64 = if batch_data.len() > (1u64 << 53) as usize {
+                (1u64 << 53) as f64
+            } else {
+                batch_data.len() as f64
+            };
+            millis_f64 / len_f64
+        }
     );
 
     let total_chars: usize = batch_data.iter().map(|s| s.chars().count()).sum();
-    let chars_per_sec = total_chars as f64 / batch_time.as_secs_f64();
-    println!("  Batch processing rate: {:.0} chars/sec", chars_per_sec);
+    let chars_per_sec = {
+        let chars_f64 = if total_chars > (1u64 << 53) as usize {
+            (1u64 << 53) as f64
+        } else {
+            total_chars as f64
+        };
+        chars_f64 / batch_time.as_secs_f64()
+    };
+    println!("  Batch processing rate: {chars_per_sec:.0} chars/sec");
 
     Ok(())
 }

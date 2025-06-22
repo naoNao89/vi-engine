@@ -158,7 +158,7 @@ fn test_character_processing() -> Result<(), AssemblyError> {
 
     for (input, expected) in test_cases {
         let result = processor.process_char(input)?;
-        assert_eq!(result, expected, "Failed for character '{}'", input);
+        assert_eq!(result, expected, "Failed for character '{input}'");
     }
 
     // Test non-Vietnamese characters (should pass through unchanged)
@@ -188,7 +188,7 @@ fn test_string_processing() -> Result<(), AssemblyError> {
 
     for (input, expected) in test_cases {
         let result = processor.process_string(input)?;
-        assert_eq!(result, expected, "Failed for string '{}'", input);
+        assert_eq!(result, expected, "Failed for string '{input}'");
     }
 
     Ok(())
@@ -301,7 +301,7 @@ fn test_concurrent_processing() -> Result<(), AssemblyError> {
                 .build()?;
 
             for j in 0..10 {
-                let text = format!("Văn bản số {} từ thread {}", j, i);
+                let text = format!("Văn bản số {j} từ thread {i}");
                 let _result = processor.process_string(&text)?;
             }
             Ok(())
@@ -413,10 +413,8 @@ fn test_unavailable_strategy_error() {
                 assert!(msg.contains("not available") || msg.contains("Strategy"));
             }
             Err(other) => {
-                panic!(
-                    "Unexpected error type for unavailable strategy: {:?}",
-                    other
-                );
+                #[allow(clippy::panic)]
+                panic!("Unexpected error type for unavailable strategy: {other:?}");
             }
         }
     }
@@ -443,7 +441,8 @@ fn test_force_assembly_behavior() {
             assert!(msg.contains("No assembly optimizations available"));
         }
         Err(other) => {
-            panic!("Unexpected error type for force assembly: {:?}", other);
+            #[allow(clippy::panic)]
+            panic!("Unexpected error type for force assembly: {other:?}");
         }
     }
 }

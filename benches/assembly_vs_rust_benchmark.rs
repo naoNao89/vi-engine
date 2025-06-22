@@ -6,7 +6,7 @@ use vi::{clean_char, clean_string, initialize_assembly_safety, SafeAssemblyProce
 use vi::is_assembly_available;
 
 #[cfg(feature = "unsafe_performance")]
-use vi::{asm_clean_char_unsafe, asm_clean_string_unsafe};
+use vi::asm_clean_string_unsafe;
 
 /// Performance-optimized benchmark without safety overhead
 fn performance_optimized_benchmark(c: &mut Criterion) {
@@ -17,14 +17,14 @@ fn performance_optimized_benchmark(c: &mut Criterion) {
 
     // Rust baseline
     group.bench_function("rust_optimized", |b| {
-        b.iter(|| black_box(clean_string(black_box(&test_string))))
+        b.iter(|| black_box(clean_string(black_box(&test_string))));
     });
 
     // Assembly without safety overhead (if available)
     #[cfg(feature = "unsafe_performance")]
     if is_assembly_available() {
         group.bench_function("assembly_unsafe", |b| {
-            b.iter(|| black_box(asm_clean_string_unsafe(black_box(&test_string))))
+            b.iter(|| black_box(asm_clean_string_unsafe(black_box(&test_string))));
         });
     }
 
@@ -49,10 +49,10 @@ fn assembly_vs_rust_character_benchmark(c: &mut Criterion) {
     // Benchmark Rust implementation
     group.bench_function("rust_single_chars", |b| {
         b.iter(|| {
-            for &ch in vietnamese_chars.iter() {
+            for &ch in &vietnamese_chars {
                 black_box(clean_char(black_box(ch)));
             }
-        })
+        });
     });
 
     // Benchmark Assembly implementation through SafeAssemblyProcessor
@@ -65,7 +65,7 @@ fn assembly_vs_rust_character_benchmark(c: &mut Criterion) {
                     .process_chars_safe(&chars_vec)
                     .unwrap_or(chars_vec),
             );
-        })
+        });
     });
 
     group.finish();
@@ -85,12 +85,12 @@ fn assembly_vs_rust_string_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("assembly_vs_rust_string_processing");
     let processor = SafeAssemblyProcessor::new();
 
-    for (size_name, test_string) in test_cases.iter() {
+    for (size_name, test_string) in &test_cases {
         group.throughput(Throughput::Bytes(test_string.len() as u64));
 
         // Rust implementation
         group.bench_with_input(BenchmarkId::new("rust", size_name), test_string, |b, s| {
-            b.iter(|| black_box(clean_string(black_box(s))))
+            b.iter(|| black_box(clean_string(black_box(s))));
         });
 
         // Assembly implementation through SafeAssemblyProcessor
@@ -102,9 +102,9 @@ fn assembly_vs_rust_string_benchmark(c: &mut Criterion) {
                     black_box(
                         processor
                             .process_string_safe(black_box(s))
-                            .unwrap_or_else(|_| s.to_string()),
+                            .unwrap_or_else(|_| (*s).to_string()),
                     )
-                })
+                });
             },
         );
     }
@@ -124,7 +124,7 @@ fn ffi_overhead_benchmark(c: &mut Criterion) {
 
     // Pure Rust baseline
     group.bench_function("rust_baseline", |b| {
-        b.iter(|| black_box(clean_char(black_box(test_char))))
+        b.iter(|| black_box(clean_char(black_box(test_char))));
     });
 
     // Assembly with safety overhead
@@ -132,7 +132,7 @@ fn ffi_overhead_benchmark(c: &mut Criterion) {
         b.iter(|| {
             let chars = vec![test_char];
             black_box(processor.process_chars_safe(&chars).unwrap_or(chars))
-        })
+        });
     });
 
     group.finish();
@@ -152,7 +152,7 @@ fn bulk_processing_benchmark(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("bulk_processing");
 
-    for &size in sizes.iter() {
+    for &size in &sizes {
         // Create test data by cycling through Vietnamese characters
         let test_data: Vec<char> = (0..size)
             .map(|i| vietnamese_chars[i % vietnamese_chars.len()])
@@ -168,7 +168,7 @@ fn bulk_processing_benchmark(c: &mut Criterion) {
                 b.iter(|| {
                     let result: Vec<char> = data.iter().map(|&ch| clean_char(ch)).collect();
                     black_box(result)
-                })
+                });
             },
         );
 
@@ -180,7 +180,7 @@ fn bulk_processing_benchmark(c: &mut Criterion) {
                 b.iter(|| {
                     let input: String = data.iter().collect();
                     black_box(clean_string(&input))
-                })
+                });
             },
         );
 
@@ -193,7 +193,7 @@ fn bulk_processing_benchmark(c: &mut Criterion) {
                 b.iter(|| {
                     let input: String = data.iter().collect();
                     black_box(processor.process_string_safe(&input).unwrap_or(input))
-                })
+                });
             },
         );
     }
@@ -215,7 +215,7 @@ fn memory_allocation_benchmark(c: &mut Criterion) {
         b.iter(|| {
             let result = clean_string(black_box(&test_string));
             black_box(result)
-        })
+        });
     });
 
     // Assembly implementation through SafeAssemblyProcessor
@@ -226,7 +226,7 @@ fn memory_allocation_benchmark(c: &mut Criterion) {
                 .process_string_safe(black_box(&test_string))
                 .unwrap_or_else(|_| test_string.clone());
             black_box(result)
-        })
+        });
     });
 
     group.finish();
@@ -249,7 +249,7 @@ fn cache_performance_benchmark(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("cache_performance");
 
-    for (cache_level, test_data) in test_cases.iter() {
+    for (cache_level, test_data) in &test_cases {
         group.throughput(Throughput::Bytes(test_data.len() as u64));
 
         // Rust implementation
@@ -269,9 +269,9 @@ fn cache_performance_benchmark(c: &mut Criterion) {
                     black_box(
                         processor
                             .process_string_safe(black_box(data))
-                            .unwrap_or_else(|_| data.to_string()),
+                            .unwrap_or_else(|_| (*data).to_string()),
                     )
-                })
+                });
             },
         );
     }
@@ -288,7 +288,7 @@ fn concurrent_benchmark(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("concurrent_processing");
 
-    for &thread_count in thread_counts.iter() {
+    for &thread_count in &thread_counts {
         group.throughput(Throughput::Bytes((test_data.len() * thread_count) as u64));
 
         // Rust implementation
@@ -306,7 +306,7 @@ fn concurrent_benchmark(c: &mut Criterion) {
 
                     let results: Vec<_> = handles.into_iter().map(|h| h.join().unwrap()).collect();
                     black_box(results)
-                })
+                });
             },
         );
 
@@ -330,7 +330,7 @@ fn concurrent_benchmark(c: &mut Criterion) {
 
                     let results: Vec<_> = handles.into_iter().map(|h| h.join().unwrap()).collect();
                     black_box(results)
-                })
+                });
             },
         );
     }

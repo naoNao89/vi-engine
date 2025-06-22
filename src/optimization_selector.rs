@@ -17,7 +17,7 @@ pub enum OptimizationStrategy {
     AppleSiliconAssembly,
     /// Generic ARM64 assembly with NEON support
     GenericArm64Assembly,
-    /// x86_64 assembly with SIMD optimizations
+    /// `x86_64` assembly with SIMD optimizations
     X86_64Assembly,
     /// Optimized Rust implementation with compiler vectorization
     RustOptimized,
@@ -162,7 +162,7 @@ impl OptimizationSelector {
         }
     }
 
-    /// Create x86_64 optimization profile
+    /// Create `x86_64` optimization profile
     fn create_x86_64_profile(cpu_capabilities: &CpuCapabilities) -> OptimizationProfile {
         let (available, unavailable_reason) = match &cpu_capabilities.architecture {
             CpuArchitecture::X86_64 { has_avx2, .. } => {
@@ -246,8 +246,9 @@ impl OptimizationSelector {
             .iter()
             .filter(|profile| profile.available)
             .max_by_key(|profile| profile.estimated_throughput)
-            .map(|profile| profile.strategy.clone())
-            .unwrap_or(OptimizationStrategy::RustStandard)
+            .map_or(OptimizationStrategy::RustStandard, |profile| {
+                profile.strategy.clone()
+            })
     }
 
     /// Get the selected optimization strategy
@@ -295,13 +296,24 @@ impl OptimizationSelector {
     /// Get optimization summary for diagnostics
     #[must_use = "Optimization summary should be used for logging or diagnostics"]
     pub fn optimization_summary(&self) -> String {
-        let selected_profile = self.selected_profile().unwrap();
+        let selected_profile = match self.selected_profile() {
+            Some(profile) => profile,
+            None => return "No optimization profile selected".to_string(),
+        };
 
         format!(
             "Selected: {:?}\nPerformance: {}\nThroughput: {:.1}M chars/sec\nCPU: {}",
             self.selected_strategy,
             self.cpu_capabilities.performance_description(),
-            selected_profile.estimated_throughput as f64 / 1_000_000.0,
+            {
+                let throughput = selected_profile.estimated_throughput;
+                let throughput_f64 = if throughput > (1u64 << 53) {
+                    (1u64 << 53) as f64
+                } else {
+                    throughput as f64
+                };
+                throughput_f64 / 1_000_000.0
+            },
             self.cpu_capabilities.architecture_description()
         )
     }
@@ -338,7 +350,7 @@ impl AppleSiliconProcessor {
             .profiles()
             .iter()
             .find(|p| p.strategy == OptimizationStrategy::AppleSiliconAssembly)
-            .unwrap()
+            .ok_or_else(|| AssemblyError::ExecutionError("Apple Silicon profile not found".to_string()))?
             .clone();
 
         Ok(AppleSiliconProcessor {
@@ -361,7 +373,7 @@ impl GenericArm64Processor {
             .profiles()
             .iter()
             .find(|p| p.strategy == OptimizationStrategy::GenericArm64Assembly)
-            .unwrap()
+            .ok_or_else(|| AssemblyError::ExecutionError("Generic ARM64 profile not found".to_string()))?
             .clone();
 
         Ok(GenericArm64Processor {
@@ -371,20 +383,20 @@ impl GenericArm64Processor {
     }
 }
 
-/// x86_64 optimized processor
+/// `x86_64` optimized processor
 pub struct X86_64Processor {
     safe_processor: SafeAssemblyProcessor,
     profile: OptimizationProfile,
 }
 
 impl X86_64Processor {
-    /// Creates a new x86_64 processor with AVX-512 and BMI2 optimizations.
+    /// Creates a new `x86_64` processor with AVX-512 and BMI2 optimizations.
     pub fn new() -> Result<Self, AssemblyError> {
         let profile = OptimizationSelector::get()
             .profiles()
             .iter()
             .find(|p| p.strategy == OptimizationStrategy::X86_64Assembly)
-            .unwrap()
+            .ok_or_else(|| AssemblyError::ExecutionError("x86_64 profile not found".to_string()))?
             .clone();
 
         Ok(X86_64Processor {
@@ -407,12 +419,13 @@ impl Default for RustOptimizedProcessor {
 
 impl RustOptimizedProcessor {
     /// Creates a new Rust optimized processor with performance enhancements.
+    #[must_use]
     pub fn new() -> Self {
         let profile = OptimizationSelector::get()
             .profiles()
             .iter()
             .find(|p| p.strategy == OptimizationStrategy::RustOptimized)
-            .unwrap()
+            .expect("Rust optimized profile should always be available")
             .clone();
 
         RustOptimizedProcessor { profile }
@@ -432,12 +445,13 @@ impl Default for RustStandardProcessor {
 
 impl RustStandardProcessor {
     /// Creates a new standard Rust processor with baseline implementation.
+    #[must_use]
     pub fn new() -> Self {
         let profile = OptimizationSelector::get()
             .profiles()
             .iter()
             .find(|p| p.strategy == OptimizationStrategy::RustStandard)
-            .unwrap()
+            .expect("Rust standard profile should always be available")
             .clone();
 
         RustStandardProcessor { profile }

@@ -12,7 +12,7 @@ fn incremental_vs_batch_telex(c: &mut Criterion) {
                 let _ = buffer.push(ch);
             }
             black_box(buffer.view().to_string())
-        })
+        });
     });
 
     c.bench_function("telex batch nghienge", |b| {
@@ -20,7 +20,7 @@ fn incremental_vs_batch_telex(c: &mut Criterion) {
             let mut output = String::new();
             transform_buffer(&TELEX, black_box(test_input.chars()), &mut output);
             black_box(output)
-        })
+        });
     });
 }
 
@@ -34,7 +34,7 @@ fn incremental_vs_batch_vni(c: &mut Criterion) {
                 let _ = buffer.push(ch);
             }
             black_box(buffer.view().to_string())
-        })
+        });
     });
 
     c.bench_function("vni batch nghieng6", |b| {
@@ -42,7 +42,7 @@ fn incremental_vs_batch_vni(c: &mut Criterion) {
             let mut output = String::new();
             transform_buffer(&VNI, black_box(test_input.chars()), &mut output);
             black_box(output)
-        })
+        });
     });
 }
 
@@ -59,7 +59,7 @@ fn incremental_character_by_character(c: &mut Criterion) {
                 results.push(buffer.view().to_string());
             }
             black_box(results)
-        })
+        });
     });
 }
 
@@ -78,7 +78,7 @@ fn incremental_reuse_buffer(c: &mut Criterion) {
                 results.push(buffer.view().to_string());
             }
             black_box(results)
-        })
+        });
     });
 }
 
@@ -92,7 +92,7 @@ fn incremental_long_input(c: &mut Criterion) {
                 let _ = buffer.push(ch);
             }
             black_box(buffer.view().to_string())
-        })
+        });
     });
 
     c.bench_function("batch long input", |b| {
@@ -100,7 +100,7 @@ fn incremental_long_input(c: &mut Criterion) {
             let mut output = String::new();
             transform_buffer(&TELEX, black_box(long_input.chars()), &mut output);
             black_box(output)
-        })
+        });
     });
 }
 
@@ -117,7 +117,7 @@ fn incremental_memory_efficiency(c: &mut Criterion) {
                 black_box(buffer.view().to_string());
                 buffer.clear();
             }
-        })
+        });
     });
 }
 

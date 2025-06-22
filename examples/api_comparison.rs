@@ -45,12 +45,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let is_viet_vowel = is_vowel(ch);
 
         println!(
-            "'{}' -> Rust: '{}', Assembly: '{}', Is Vowel: {}",
-            ch, rust_result, asm_result, is_viet_vowel
+            "'{ch}' -> Rust: '{rust_result}', Assembly: '{asm_result}', Is Vowel: {is_viet_vowel}"
         );
 
         // Verify results match
-        assert_eq!(rust_result, asm_result, "Results should match for '{}'", ch);
+        assert_eq!(rust_result, asm_result, "Results should match for '{ch}'");
     }
     println!();
 
@@ -68,16 +67,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let rust_result = clean_string(input);
         let asm_result = asm_clean_string(input)?;
 
-        println!("Input:    '{}'", input);
-        println!("Rust:     '{}'", rust_result);
-        println!("Assembly: '{}'", asm_result);
+        println!("Input:    '{input}'");
+        println!("Rust:     '{rust_result}'");
+        println!("Assembly: '{asm_result}'");
         println!();
 
         // Verify results match
         assert_eq!(
             rust_result, asm_result,
-            "Results should match for '{}'",
-            input
+            "Results should match for '{input}'"
         );
     }
 
@@ -102,7 +100,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let rust_chars_per_sec = (large_text.len() * iterations) as f64 / rust_duration.as_secs_f64();
 
     println!("Rust Implementation:");
-    println!("  Total time: {:?}", rust_duration);
+    println!("  Total time: {rust_duration:?}");
     println!(
         "  Performance: {:.2} M chars/sec",
         rust_chars_per_sec / 1_000_000.0
@@ -115,10 +113,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let _ = asm_clean_string(&large_text)?;
     }
     let asm_duration = start.elapsed();
-    let asm_chars_per_sec = (large_text.len() * iterations) as f64 / asm_duration.as_secs_f64();
+    let asm_chars_per_sec = {
+        let total_chars = large_text.len() * iterations;
+        let total_chars_f64 = if total_chars > (1u64 << 53) as usize {
+            (1u64 << 53) as f64
+        } else {
+            total_chars as f64
+        };
+        total_chars_f64 / asm_duration.as_secs_f64()
+    };
 
     println!("Assembly Implementation:");
-    println!("  Total time: {:?}", asm_duration);
+    println!("  Total time: {asm_duration:?}");
     println!(
         "  Performance: {:.2} M chars/sec",
         asm_chars_per_sec / 1_000_000.0
@@ -127,7 +133,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Calculate speedup
     let speedup = rust_duration.as_secs_f64() / asm_duration.as_secs_f64();
-    println!("Assembly Speedup: {:.2}x faster", speedup);
+    println!("Assembly Speedup: {speedup:.2}x faster");
     println!();
 
     // Bulk processing demonstration
@@ -139,9 +145,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let result: String = output_chars.iter().collect();
 
     println!("Bulk processing:");
-    println!("  Input:  {:?}", input_chars);
-    println!("  Output: {:?}", output_chars);
-    println!("  Result: '{}'", result);
+    println!("  Input:  {input_chars:?}");
+    println!("  Output: {output_chars:?}");
+    println!("  Result: '{result}'");
     println!("  Processed: {} characters", output_chars.len());
     println!();
 

@@ -1,6 +1,6 @@
 //! Example demonstrating safe assembly processing
 //!
-//! This example shows how to use the SafeAssemblyProcessor for robust
+//! This example shows how to use the `SafeAssemblyProcessor` for robust
 //! Vietnamese text processing with comprehensive safety guarantees.
 
 use std::sync::Arc;
@@ -26,7 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     cancellation_example()?;
 
     // Metrics example
-    metrics_example()?;
+    metrics_example();
 
     println!("\nAll examples completed successfully!");
     Ok(())
@@ -48,8 +48,8 @@ fn basic_usage_example() -> Result<(), Box<dyn std::error::Error>> {
 
     for input in test_cases {
         let result = processor.process_string_safe(input)?;
-        println!("Input:  {}", input);
-        println!("Output: {}", result);
+        println!("Input:  {input}");
+        println!("Output: {result}");
         println!();
     }
 
@@ -73,7 +73,7 @@ fn timeout_protection_example() -> Result<(), Box<dyn std::error::Error>> {
             );
         }
         Err(e) => {
-            println!("Normal input failed: {}", e);
+            println!("Normal input failed: {e}");
         }
     }
 
@@ -88,7 +88,7 @@ fn timeout_protection_example() -> Result<(), Box<dyn std::error::Error>> {
             );
         }
         Err(e) => {
-            println!("Large input handling: {}", e);
+            println!("Large input handling: {e}");
         }
     }
 
@@ -137,7 +137,7 @@ fn concurrent_processing_example() -> Result<(), Box<dyn std::error::Error>> {
                 );
             }
             Err(e) => {
-                println!("Thread {}: Error - {}", thread_id, e);
+                println!("Thread {thread_id}: Error - {e}");
             }
         }
     }
@@ -153,7 +153,7 @@ fn cancellation_example() -> Result<(), Box<dyn std::error::Error>> {
 
     // Start processing in background
     let processor_clone = processor.clone();
-    let input_clone = large_input.clone();
+    let input_clone = large_input;
     let handle = thread::spawn(move || processor_clone.process_string_safe(&input_clone));
 
     // Let it run for a bit
@@ -172,14 +172,14 @@ fn cancellation_example() -> Result<(), Box<dyn std::error::Error>> {
             );
         }
         Err(e) => {
-            println!("Operation cancelled: {}", e);
+            println!("Operation cancelled: {e}");
         }
     }
 
     Ok(())
 }
 
-fn metrics_example() -> Result<(), Box<dyn std::error::Error>> {
+fn metrics_example() {
     println!("\n=== Metrics Example ===");
 
     let processor = SafeAssemblyProcessor::new();
@@ -251,8 +251,28 @@ fn metrics_example() -> Result<(), Box<dyn std::error::Error>> {
         "  Global success rate: {:.2}%",
         global_metrics.get_success_rate() * 100.0
     );
+}
 
-    Ok(())
+/// Helper function to safely convert Duration to microseconds as f64
+fn duration_as_micros_f64(duration: std::time::Duration) -> f64 {
+    // Use saturating conversion to avoid overflow
+    let micros = duration.as_micros();
+    if micros > u128::from(u64::MAX) {
+        u64::MAX as f64
+    } else {
+        micros as f64
+    }
+}
+
+/// Helper function to safely convert Duration to nanoseconds as f64
+fn duration_as_nanos_f64(duration: std::time::Duration) -> f64 {
+    // Use saturating conversion to avoid overflow
+    let nanos = duration.as_nanos();
+    if nanos > u128::from(u64::MAX) {
+        u64::MAX as f64
+    } else {
+        nanos as f64
+    }
 }
 
 #[allow(dead_code)]
@@ -278,21 +298,21 @@ fn performance_comparison_example() -> Result<(), Box<dyn std::error::Error>> {
     }
     let direct_duration = start.elapsed();
 
-    println!("Performance Comparison ({} iterations):", iterations);
+    println!("Performance Comparison ({iterations} iterations):");
     println!(
         "  Safe processing:   {:?} ({:.2} μs/op)",
         safe_duration,
-        safe_duration.as_micros() as f64 / iterations as f64
+        duration_as_micros_f64(safe_duration) / f64::from(iterations)
     );
     println!(
         "  Direct processing: {:?} ({:.2} μs/op)",
         direct_duration,
-        direct_duration.as_micros() as f64 / iterations as f64
+        duration_as_micros_f64(direct_duration) / f64::from(iterations)
     );
 
     let overhead_percent =
-        ((safe_duration.as_nanos() as f64 / direct_duration.as_nanos() as f64) - 1.0) * 100.0;
-    println!("  Safety overhead:   {:.2}%", overhead_percent);
+        ((duration_as_nanos_f64(safe_duration) / duration_as_nanos_f64(direct_duration)) - 1.0) * 100.0;
+    println!("  Safety overhead:   {overhead_percent:.2}%");
 
     Ok(())
 }

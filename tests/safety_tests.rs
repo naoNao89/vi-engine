@@ -49,7 +49,7 @@ fn test_vietnamese_character_processing() {
 
     for (input, expected) in test_cases {
         let result = processor.process_string_safe(input).unwrap();
-        assert_eq!(result, expected, "Failed for input: {}", input);
+        assert_eq!(result, expected, "Failed for input: {input}");
     }
 }
 
@@ -95,7 +95,7 @@ fn test_large_input_processing() {
         Ok(output) => assert_eq!(output, expected),
         Err(e) => {
             // If cancelled due to previous test state, that's acceptable for this test
-            println!("Large input test result: {}", e);
+            println!("Large input test result: {e}");
             assert!(matches!(
                 e,
                 AssemblyError::Cancelled | AssemblyError::Timeout
@@ -141,7 +141,8 @@ fn test_timeout_protection() {
             println!("Operation cancelled (acceptable for test)");
         }
         Err(e) => {
-            panic!("Unexpected error: {:?}", e);
+            #[allow(clippy::panic)]
+            panic!("Unexpected error: {e:?}");
         }
     }
 }
@@ -154,7 +155,7 @@ fn test_cooperative_cancellation() {
 
     // Start processing in background thread
     let processor_clone = processor.clone();
-    let input_clone = large_input.clone();
+    let input_clone = large_input;
     let handle = thread::spawn(move || processor_clone.process_chars_safe(&input_clone));
 
     // Cancel after 10ms
@@ -174,7 +175,8 @@ fn test_cooperative_cancellation() {
             println!("Processing completed before cancellation");
         }
         Err(e) => {
-            panic!("Unexpected error: {:?}", e);
+            #[allow(clippy::panic)]
+            panic!("Unexpected error: {e:?}");
         }
     }
 }
@@ -189,7 +191,7 @@ fn test_concurrent_safety() {
     for i in 0..5 {
         let processor_clone = processor.clone();
         let handle = thread::spawn(move || {
-            let input = format!("test{}", i).repeat(1000);
+            let input = format!("test{i}").repeat(1000);
             processor_clone.process_string_safe(&input)
         });
         handles.push(handle);
@@ -209,14 +211,14 @@ fn test_concurrent_safety() {
         match handle.join().unwrap() {
             Ok(_) => completed += 1,
             Err(AssemblyError::Cancelled) => cancelled += 1,
-            Err(e) => panic!("Unexpected error: {:?}", e),
+            Err(e) => {
+                #[allow(clippy::panic)]
+                panic!("Unexpected error: {e:?}")
+            }
         }
     }
 
-    println!(
-        "Concurrent test: {} completed, {} cancelled",
-        completed, cancelled
-    );
+    println!("Concurrent test: {completed} completed, {cancelled} cancelled");
     // At least some should be cancelled or completed
     assert!(completed + cancelled == 5);
 }
@@ -285,7 +287,8 @@ fn test_iteration_limit_protection() {
             println!("Iteration limit protection working correctly");
         }
         Err(e) => {
-            panic!("Unexpected error: {:?}", e);
+            #[allow(clippy::panic)]
+            panic!("Unexpected error: {e:?}");
         }
     }
 
@@ -308,9 +311,9 @@ fn test_error_display() {
     ];
 
     for error in errors {
-        let display = format!("{}", error);
+        let display = format!("{error}");
         assert!(!display.is_empty());
-        println!("Error display: {}", display);
+        println!("Error display: {display}");
     }
 }
 
@@ -357,7 +360,7 @@ fn test_watchdog_custom_config() {
         enabled: true,
     };
 
-    let processor = SafeAssemblyProcessor::with_watchdog_config(config.clone());
+    let processor = SafeAssemblyProcessor::with_watchdog_config(config);
     assert!(processor.has_watchdog());
 
     let actual_config = processor.watchdog_config().unwrap();
@@ -402,17 +405,17 @@ fn test_watchdog_timeout_detection() {
     let timeout_detected = control.timeout_flag.load(Ordering::Relaxed);
     let cancel_detected = control.cancel_flag.load(Ordering::Relaxed);
 
-    if !timeout_detected {
+    if timeout_detected {
+        assert!(
+            cancel_detected,
+            "Cancel flag should be set when timeout is detected"
+        );
+    } else {
         println!("Warning: Timeout not detected - may be due to test timing or interference");
         // Check if operation was at least cancelled
         assert!(
             cancel_detected,
             "Operation should be cancelled even if timeout flag not set"
-        );
-    } else {
-        assert!(
-            cancel_detected,
-            "Cancel flag should be set when timeout is detected"
         );
     }
 

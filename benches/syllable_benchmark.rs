@@ -8,7 +8,7 @@ fn benchmark_syllable_push(c: &mut Criterion) {
             let mut syllable = Syllable::default();
             syllable.push(black_box('v'));
             black_box(syllable);
-        })
+        });
     });
 
     c.bench_function("syllable_push_word_building", |b| {
@@ -18,7 +18,7 @@ fn benchmark_syllable_push(c: &mut Criterion) {
                 syllable.push(ch);
             }
             black_box(syllable.to_string());
-        })
+        });
     });
 }
 

@@ -3,9 +3,9 @@ fn main() {
 
     let mut result = String::new();
     for input in inputs {
-        vi::transform_buffer(&vi::VNI, input.iter().cloned(), &mut result);
+        vi::transform_buffer(&vi::VNI, input.iter().copied(), &mut result);
         result.push(' ');
     }
 
-    println!("{}", result); // prints "việt nam "
+    println!("{result}"); // prints "việt nam "
 }

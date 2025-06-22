@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🦀 Processing with Rust-only (no assembly):");
     for text in vietnamese_texts {
         let result = processor.process_string(text)?;
-        println!("  '{}' → '{}'", text, result);
+        println!("  '{text}' → '{result}'");
     }
 
     // Verify we're using Rust

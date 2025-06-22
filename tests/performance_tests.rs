@@ -9,6 +9,26 @@ use vi::{
     is_assembly_available,
 };
 
+/// Helper function to safely convert usize to f64
+fn usize_to_f64(value: usize) -> f64 {
+    // Use saturating conversion to avoid overflow
+    if value > (1u64 << 53) as usize {
+        (1u64 << 53) as f64
+    } else {
+        value as f64
+    }
+}
+
+/// Helper function to safely convert u128 to f64
+fn u128_to_f64(value: u128) -> f64 {
+    // Use saturating conversion to avoid overflow
+    if value > (1u64 << 53) as u128 {
+        (1u64 << 53) as f64
+    } else {
+        value as f64
+    }
+}
+
 /// Performance test configuration
 #[derive(Debug, Clone)]
 pub struct PerfTestConfig {
@@ -128,7 +148,7 @@ fn benchmark_implementation<F>(
 where
     F: FnMut(char) -> char,
 {
-    println!("Benchmarking {} implementation...", name);
+    println!("Benchmarking {name} implementation...");
 
     // Warmup
     for _ in 0..config.warmup_iterations {
@@ -155,14 +175,14 @@ where
     let total_time = overall_start.elapsed();
 
     // Calculate statistics
-    let chars_per_second = total_chars as f64 / total_time.as_secs_f64();
-    let avg_latency_ns = latencies.iter().sum::<f64>() / latencies.len() as f64;
+    let chars_per_second = usize_to_f64(total_chars) / total_time.as_secs_f64();
+    let avg_latency_ns = latencies.iter().sum::<f64>() / usize_to_f64(latencies.len());
     let min_latency_ns = latencies.iter().fold(f64::INFINITY, |a, &b| a.min(b));
     let max_latency_ns = latencies.iter().fold(0.0f64, |a, &b| a.max(b));
 
     // Measure FFI overhead if requested
     let ffi_overhead_ns = if config.measure_ffi_overhead && name == "Assembly" {
-        measure_ffi_overhead().ok().map(|d| d.as_nanos() as f64)
+        measure_ffi_overhead().ok().map(|d| u128_to_f64(d.as_nanos()))
     } else {
         None
     };
@@ -199,7 +219,7 @@ pub fn benchmark_string_processing() -> Result<(), Box<dyn std::error::Error>> {
 
         // Benchmark Rust implementation
         let rust_time = benchmark_string_impl(test_string, clean_string, 1000)?;
-        let rust_throughput = size as f64 / rust_time.as_secs_f64();
+        let rust_throughput = usize_to_f64(size) / rust_time.as_secs_f64();
 
         // Benchmark Assembly implementation
         let (assembly_time, assembly_throughput) = if is_assembly_available() {
@@ -208,7 +228,7 @@ pub fn benchmark_string_processing() -> Result<(), Box<dyn std::error::Error>> {
                 |s| asm_clean_string(s).unwrap_or_else(|_| s.to_string()),
                 1000,
             )?;
-            let throughput = size as f64 / time.as_secs_f64();
+            let throughput = usize_to_f64(size) / time.as_secs_f64();
             (time, throughput)
         } else {
             (rust_time, rust_throughput)
@@ -227,7 +247,7 @@ pub fn benchmark_string_processing() -> Result<(), Box<dyn std::error::Error>> {
 
         if is_assembly_available() {
             let speedup = assembly_throughput / rust_throughput;
-            println!("  Speedup:  {:.2}x", speedup);
+            println!("  Speedup:  {speedup:.2}x");
         }
     }
 
@@ -274,14 +294,13 @@ mod tests {
     fn test_ffi_overhead_measurement() {
         match measure_ffi_overhead() {
             Ok(overhead) => {
-                println!("FFI overhead: {:?}", overhead);
+                println!("FFI overhead: {overhead:?}");
                 // Should be reasonable (< 1000ns on modern hardware with safety overhead)
                 assert!(overhead.as_nanos() < 10000);
             }
             Err(e) => {
                 println!(
-                    "FFI overhead measurement failed (likely due to assembly cancellation): {}",
-                    e
+                    "FFI overhead measurement failed (likely due to assembly cancellation): {e}"
                 );
                 // This is acceptable - assembly operations can be cancelled for safety
             }

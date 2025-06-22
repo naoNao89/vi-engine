@@ -26,7 +26,7 @@ extern "C" {
 // x86_64 optimized functions
 #[cfg(feature = "x86_64_assembly")]
 extern "C" {
-    /// Process single character with x86_64 optimizations
+    /// Process single character with `x86_64` optimizations
     fn hybrid_clean_char_x86_64(ch: u32) -> u32;
 
     /// Process character array with AVX-512 vectorization
@@ -62,7 +62,7 @@ extern "C" {
 pub enum AssemblyPlatform {
     /// Apple Silicon ARM64 with optimized assembly kernels
     AppleSilicon,
-    /// x86_64 with AVX-512 and BMI2 optimizations
+    /// `x86_64` with AVX-512 and BMI2 optimizations
     X86_64,
     /// Generic ARM64 with NEON optimizations
     GenericARM64,
@@ -72,6 +72,7 @@ pub enum AssemblyPlatform {
 
 impl AssemblyPlatform {
     /// Detect the best available assembly platform
+    #[must_use]
     pub fn detect() -> Self {
         #[cfg(feature = "apple_silicon_assembly")]
         {
@@ -100,6 +101,7 @@ impl AssemblyPlatform {
     }
 
     /// Get platform name for logging/debugging
+    #[must_use]
     pub fn name(&self) -> &'static str {
         match self {
             Self::AppleSilicon => "Apple Silicon ARM64",
@@ -117,6 +119,7 @@ pub struct AssemblyInterface {
 
 impl AssemblyInterface {
     /// Create new assembly interface with automatic platform detection
+    #[must_use]
     pub fn new() -> Self {
         Self {
             platform: AssemblyPlatform::detect(),
@@ -124,11 +127,13 @@ impl AssemblyInterface {
     }
 
     /// Get the detected platform
+    #[must_use]
     pub fn platform(&self) -> AssemblyPlatform {
         self.platform
     }
 
     /// Check if assembly is available (not using Rust fallback)
+    #[must_use]
     pub fn is_assembly_available(&self) -> bool {
         self.platform != AssemblyPlatform::RustFallback
     }
@@ -162,8 +167,7 @@ impl AssemblyInterface {
                     // Validate output
                     char::from_u32(result_u32).ok_or_else(|| {
                         AssemblyError::ExecutionError(format!(
-                            "Assembly returned invalid Unicode: 0x{:X}",
-                            result_u32
+                            "Assembly returned invalid Unicode: 0x{result_u32:X}"
                         ))
                     })
                 }
@@ -180,8 +184,7 @@ impl AssemblyInterface {
                     // Validate output
                     char::from_u32(result_u32).ok_or_else(|| {
                         AssemblyError::ExecutionError(format!(
-                            "Assembly returned invalid Unicode: 0x{:X}",
-                            result_u32
+                            "Assembly returned invalid Unicode: 0x{result_u32:X}"
                         ))
                     })
                 }
@@ -198,8 +201,7 @@ impl AssemblyInterface {
                     // Validate output
                     char::from_u32(result_u32).ok_or_else(|| {
                         AssemblyError::ExecutionError(format!(
-                            "Assembly returned invalid Unicode: 0x{:X}",
-                            result_u32
+                            "Assembly returned invalid Unicode: 0x{result_u32:X}"
                         ))
                     })
                 }
@@ -399,6 +401,7 @@ pub fn is_assembly_available() -> bool {
 /// Performance-optimized assembly interface that bypasses safety checks
 /// WARNING: Only use for benchmarking - no safety guarantees!
 #[cfg(any(test, feature = "unsafe_performance"))]
+#[must_use]
 pub fn process_char_unsafe(ch: char) -> char {
     // Direct assembly call without safety overhead
     match AssemblyPlatform::detect() {
@@ -441,6 +444,7 @@ pub fn process_char_unsafe(ch: char) -> char {
 
 /// Performance-optimized bulk processing without safety overhead
 #[cfg(any(test, feature = "unsafe_performance"))]
+#[must_use]
 pub fn process_chars_bulk_unsafe(input: &[char]) -> Vec<char> {
     // Use character-by-character processing for maximum performance
     // This avoids the safety overhead of the bulk functions

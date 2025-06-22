@@ -2,8 +2,9 @@ use criterion::{criterion_group, criterion_main, Criterion};
 use std::hint::black_box;
 use vi::util::clean_char;
 
-/// Optimized clean_char function using Unicode code point ranges
+/// Optimized `clean_char` function using Unicode code point ranges
 #[inline]
+#[must_use]
 pub const fn clean_char_optimized(ch: char) -> char {
     let code = ch as u32;
 
@@ -74,18 +75,18 @@ fn benchmark_clean_char_comparison(c: &mut Criterion) {
 
     c.bench_function("clean_char_original_vietnamese", |b| {
         b.iter(|| {
-            for &ch in vietnamese_chars.iter() {
+            for &ch in &vietnamese_chars {
                 black_box(clean_char(black_box(ch)));
             }
-        })
+        });
     });
 
     c.bench_function("clean_char_optimized_vietnamese", |b| {
         b.iter(|| {
-            for &ch in vietnamese_chars.iter() {
+            for &ch in &vietnamese_chars {
                 black_box(clean_char_optimized(black_box(ch)));
             }
-        })
+        });
     });
 }
 

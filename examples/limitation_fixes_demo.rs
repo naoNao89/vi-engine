@@ -54,10 +54,10 @@ fn demonstrate_assembly_integration() -> Result<(), Box<dyn std::error::Error>> 
 
     // Process Vietnamese text using actual assembly
     let test_text = "Tiếng Việt rất đẹp và phong phú";
-    println!("📝 Input: {}", test_text);
+    println!("📝 Input: {test_text}");
 
     let result = processor.process_string_safe(test_text)?;
-    println!("🎯 Output: {}", result);
+    println!("🎯 Output: {result}");
 
     // Show performance metrics
     let metrics = processor.get_metrics();
@@ -156,7 +156,7 @@ fn demonstrate_completion_status() -> Result<(), Box<dyn std::error::Error>> {
     println!("✅ Core Vietnamese Processing:");
     for sample in vietnamese_samples {
         let result = processor.process_string_safe(sample)?;
-        println!("   {} → {}", sample, result);
+        println!("   {sample} → {result}");
     }
 
     // 2. Safety mechanisms
@@ -178,7 +178,7 @@ fn demonstrate_completion_status() -> Result<(), Box<dyn std::error::Error>> {
     let start = std::time::Instant::now();
     let _result = processor.process_string_safe("Performance test")?;
     let duration = start.elapsed();
-    println!("   - Processing time: {:?}", duration);
+    println!("   - Processing time: {duration:?}");
     println!("   - Sub-microsecond: {}", duration.as_nanos() < 1_000);
 
     // 4. Cross-platform support
@@ -222,12 +222,25 @@ fn _benchmark_assembly_performance() -> Result<(), Box<dyn std::error::Error>> {
     let duration = start.elapsed();
 
     let chars_processed = test_text.chars().count();
-    let ns_per_char = duration.as_nanos() as f64 / chars_processed as f64;
+    let ns_per_char = {
+        let nanos = duration.as_nanos();
+        let nanos_f64 = if nanos > (1u64 << 53) as u128 {
+            (1u64 << 53) as f64
+        } else {
+            nanos as f64
+        };
+        let chars_f64 = if chars_processed > (1u64 << 53) as usize {
+            (1u64 << 53) as f64
+        } else {
+            chars_processed as f64
+        };
+        nanos_f64 / chars_f64
+    };
 
     println!("📊 Benchmark Results:");
-    println!("   - Characters processed: {}", chars_processed);
-    println!("   - Total time: {:?}", duration);
-    println!("   - Time per character: {:.2} ns", ns_per_char);
+    println!("   - Characters processed: {chars_processed}");
+    println!("   - Total time: {duration:?}");
+    println!("   - Time per character: {ns_per_char:.2} ns");
     println!("   - Throughput: {:.2} M chars/sec", 1000.0 / ns_per_char);
 
     if ns_per_char < 1.0 {

@@ -75,7 +75,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for ch in sample_chars {
         let result = processor.process_char(ch)?;
-        println!("  '{}' → '{}'", ch, result);
+        println!("  '{ch}' → '{result}'");
     }
 
     // Show final optimization info
