@@ -350,7 +350,9 @@ impl AppleSiliconProcessor {
             .profiles()
             .iter()
             .find(|p| p.strategy == OptimizationStrategy::AppleSiliconAssembly)
-            .ok_or_else(|| AssemblyError::ExecutionError("Apple Silicon profile not found".to_string()))?
+            .ok_or_else(|| {
+                AssemblyError::ExecutionError("Apple Silicon profile not found".to_string())
+            })?
             .clone();
 
         Ok(AppleSiliconProcessor {
@@ -373,7 +375,9 @@ impl GenericArm64Processor {
             .profiles()
             .iter()
             .find(|p| p.strategy == OptimizationStrategy::GenericArm64Assembly)
-            .ok_or_else(|| AssemblyError::ExecutionError("Generic ARM64 profile not found".to_string()))?
+            .ok_or_else(|| {
+                AssemblyError::ExecutionError("Generic ARM64 profile not found".to_string())
+            })?
             .clone();
 
         Ok(GenericArm64Processor {

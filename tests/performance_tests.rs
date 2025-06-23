@@ -182,7 +182,9 @@ where
 
     // Measure FFI overhead if requested
     let ffi_overhead_ns = if config.measure_ffi_overhead && name == "Assembly" {
-        measure_ffi_overhead().ok().map(|d| u128_to_f64(d.as_nanos()))
+        measure_ffi_overhead()
+            .ok()
+            .map(|d| u128_to_f64(d.as_nanos()))
     } else {
         None
     };

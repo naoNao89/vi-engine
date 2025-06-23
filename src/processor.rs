@@ -150,9 +150,8 @@ pub fn modify_letter(syllable: &mut Syllable, modification: &LetterModification)
             let max_horn_modification_possible = modification_possibilities.len();
 
             if horn_modification_count < max_horn_modification_possible {
-                if let Some(other_modification_position) = modification_possibilities
-                    .iter()
-                    .find(|index| {
+                if let Some(other_modification_position) =
+                    modification_possibilities.iter().find(|index| {
                         current_modifications
                             .iter()
                             .any(|(current_index, _)| *current_index != **index)

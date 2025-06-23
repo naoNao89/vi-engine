@@ -250,23 +250,20 @@ fn batch_processing_example() -> Result<(), AssemblyError> {
     println!("\nBatch Processing Statistics:");
     println!("  Items processed: {}", batch_data.len());
     println!("  Total time: {:.2} ms", batch_time.as_millis());
-    println!(
-        "  Average time per item: {:.2} ms",
-        {
-            let millis = batch_time.as_millis();
-            let millis_f64 = if millis > (1u64 << 53) as u128 {
-                (1u64 << 53) as f64
-            } else {
-                millis as f64
-            };
-            let len_f64 = if batch_data.len() > (1u64 << 53) as usize {
-                (1u64 << 53) as f64
-            } else {
-                batch_data.len() as f64
-            };
-            millis_f64 / len_f64
-        }
-    );
+    println!("  Average time per item: {:.2} ms", {
+        let millis = batch_time.as_millis();
+        let millis_f64 = if millis > (1u64 << 53) as u128 {
+            (1u64 << 53) as f64
+        } else {
+            millis as f64
+        };
+        let len_f64 = if batch_data.len() > (1u64 << 53) as usize {
+            (1u64 << 53) as f64
+        } else {
+            batch_data.len() as f64
+        };
+        millis_f64 / len_f64
+    });
 
     let total_chars: usize = batch_data.iter().map(|s| s.chars().count()).sum();
     let chars_per_sec = {

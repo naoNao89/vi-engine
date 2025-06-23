@@ -311,7 +311,8 @@ fn performance_comparison_example() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let overhead_percent =
-        ((duration_as_nanos_f64(safe_duration) / duration_as_nanos_f64(direct_duration)) - 1.0) * 100.0;
+        ((duration_as_nanos_f64(safe_duration) / duration_as_nanos_f64(direct_duration)) - 1.0)
+            * 100.0;
     println!("  Safety overhead:   {overhead_percent:.2}%");
 
     Ok(())

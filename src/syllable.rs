@@ -160,12 +160,16 @@ impl Syllable {
             "{}{}{}{}",
             self.initial_consonant, self.vowel, self.final_consonant, ch
         );
-        let (_, syllable) = parse_syllable(&clean_syllable)
-            .unwrap_or_else(|_| ("", SyllableComponents {
-                initial_consonant: "",
-                vowel: &clean_syllable,
-                final_consonant: "",
-            }));
+        let (_, syllable) = parse_syllable(&clean_syllable).unwrap_or_else(|_| {
+            (
+                "",
+                SyllableComponents {
+                    initial_consonant: "",
+                    vowel: &clean_syllable,
+                    final_consonant: "",
+                },
+            )
+        });
         self.initial_consonant = syllable.initial_consonant.chars().map(clean_char).collect();
         self.vowel = syllable.vowel.chars().map(clean_char).collect();
         self.final_consonant = syllable.final_consonant.to_string();
@@ -201,12 +205,16 @@ impl Syllable {
 
     /// Set a new value for the current syllable. This will parse the value into consonants, vowel, tonemark & modifications.
     pub fn set(&mut self, raw: String) {
-        let (_, syllable) = parse_syllable(&raw)
-            .unwrap_or_else(|_| ("", SyllableComponents {
-                initial_consonant: "",
-                vowel: &raw,
-                final_consonant: "",
-            }));
+        let (_, syllable) = parse_syllable(&raw).unwrap_or_else(|_| {
+            (
+                "",
+                SyllableComponents {
+                    initial_consonant: "",
+                    vowel: &raw,
+                    final_consonant: "",
+                },
+            )
+        });
         self.initial_consonant = syllable.initial_consonant.chars().map(clean_char).collect();
         self.vowel = syllable.vowel.chars().map(clean_char).collect();
         self.final_consonant = syllable.final_consonant.to_string();
@@ -320,12 +328,16 @@ impl ComplexSyllable {
 
     /// Set a new value for the current syllable.
     pub fn set(&mut self, raw: String) {
-        let (_, syllable) = parse_syllable(&raw)
-            .unwrap_or_else(|_| ("", SyllableComponents {
-                initial_consonant: "",
-                vowel: &raw,
-                final_consonant: "",
-            }));
+        let (_, syllable) = parse_syllable(&raw).unwrap_or_else(|_| {
+            (
+                "",
+                SyllableComponents {
+                    initial_consonant: "",
+                    vowel: &raw,
+                    final_consonant: "",
+                },
+            )
+        });
         self.initial_consonant = syllable.initial_consonant.chars().map(clean_char).collect();
         self.vowel = syllable.vowel.chars().map(clean_char).collect();
         self.final_consonant = syllable.final_consonant.to_string();
@@ -399,12 +411,16 @@ impl SimpleSyllable {
 
     /// Set a new value for the current syllable.
     pub fn set(&mut self, raw: String) {
-        let (_, syllable) = parse_syllable(&raw)
-            .unwrap_or_else(|_| ("", SyllableComponents {
-                initial_consonant: "",
-                vowel: &raw,
-                final_consonant: "",
-            }));
+        let (_, syllable) = parse_syllable(&raw).unwrap_or_else(|_| {
+            (
+                "",
+                SyllableComponents {
+                    initial_consonant: "",
+                    vowel: &raw,
+                    final_consonant: "",
+                },
+            )
+        });
         self.initial_consonant = syllable.initial_consonant.chars().map(clean_char).collect();
         self.vowel = syllable.vowel.chars().map(clean_char).collect();
         self.final_consonant = syllable.final_consonant.to_string();
