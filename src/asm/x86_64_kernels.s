@@ -175,6 +175,9 @@ sidechannel_protection:
 .global hybrid_clean_chars_bulk_avx512
 .global hybrid_clean_chars_bulk_bmi2
 .global hybrid_clean_chars_bulk_x86_64_safe
+.global hybrid_clean_chars_bulk_safe
+.global apple_hybrid_clean_char_optimized
+.global hybrid_clean_chars_bulk_neon
 
 # Security and monitoring function exports
 .global security_violation_handler
@@ -965,3 +968,44 @@ hybrid_clean_chars_bulk_avx512_safe:
 
 # Function size information removed for macOS compatibility
 # .size directives are not supported on macOS assembler
+
+# Compatibility functions for cross-platform assembly support
+
+# Compatibility alias for hybrid_clean_chars_bulk_safe
+# Input: rdi = input array pointer, rsi = output array pointer, rdx = length, rcx = control pointer
+# Output: rax = number of characters processed
+hybrid_clean_chars_bulk_safe:
+    # Delegate to the x86_64 safe implementation
+    jmp hybrid_clean_chars_bulk_x86_64_safe
+
+# Compatibility function for Apple Silicon optimized character cleaning
+# Input: rdi = character (u32)
+# Output: rax = cleaned character (u32)
+# Note: On x86_64, this delegates to the generic x86_64 implementation
+apple_hybrid_clean_char_optimized:
+    # Delegate to the x86_64 implementation
+    jmp hybrid_clean_char_x86_64
+
+# Compatibility function for NEON bulk processing
+# Input: rdi = input array pointer, rsi = output array pointer, rdx = length
+# Output: rax = number of characters processed
+# Note: On x86_64, this delegates to the BMI2 implementation if available
+hybrid_clean_chars_bulk_neon:
+    # Check if BMI2 is available for best performance
+    push rbp
+    mov rbp, rsp
+
+    # Check BMI2 availability
+    mov eax, 7
+    mov ecx, 0
+    cpuid
+    bt ebx, 8  # BMI2 bit
+    jc .use_bmi2_bulk
+
+    # Fall back to generic x86_64 safe implementation
+    pop rbp
+    jmp hybrid_clean_chars_bulk_x86_64_safe
+
+.use_bmi2_bulk:
+    pop rbp
+    jmp hybrid_clean_chars_bulk_bmi2
