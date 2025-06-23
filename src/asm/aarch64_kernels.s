@@ -414,3 +414,50 @@ Lsafe_cancelled:
 .global _hybrid_clean_char_neon
 .global _hybrid_clean_chars_bulk_neon
 .global _hybrid_clean_chars_bulk_safe
+
+// Compatibility aliases for cross-platform function calls
+// These allow x86_64 function names to work on ARM64
+.global _hybrid_clean_char_x86_64
+.global _hybrid_clean_chars_bulk_avx512
+.global _hybrid_clean_chars_bulk_bmi2
+
+// Double underscore versions for Rust name mangling compatibility
+.global __apple_hybrid_clean_char_optimized
+.global __hybrid_clean_char_aarch64
+.global __hybrid_clean_char_x86_64
+.global __hybrid_clean_chars_bulk_neon
+.global __hybrid_clean_chars_bulk_safe
+
+// Compatibility function implementations
+_hybrid_clean_char_x86_64:
+    // Delegate to the ARM64 implementation
+    b _hybrid_clean_char_aarch64
+
+_hybrid_clean_chars_bulk_avx512:
+    // Delegate to the NEON implementation
+    b _hybrid_clean_chars_bulk_neon
+
+_hybrid_clean_chars_bulk_bmi2:
+    // Delegate to the NEON implementation
+    b _hybrid_clean_chars_bulk_neon
+
+// Double underscore compatibility aliases
+__apple_hybrid_clean_char_optimized:
+    // Delegate to the Apple Silicon implementation
+    b _apple_hybrid_clean_char_optimized
+
+__hybrid_clean_char_aarch64:
+    // Delegate to the ARM64 implementation
+    b _hybrid_clean_char_aarch64
+
+__hybrid_clean_char_x86_64:
+    // Delegate to the ARM64 implementation
+    b _hybrid_clean_char_aarch64
+
+__hybrid_clean_chars_bulk_neon:
+    // Delegate to the NEON implementation
+    b _hybrid_clean_chars_bulk_neon
+
+__hybrid_clean_chars_bulk_safe:
+    // Delegate to the safe implementation
+    b _hybrid_clean_chars_bulk_safe

@@ -1,3 +1,10 @@
+//! Syllable Processing Benchmark Suite
+//!
+//! This benchmark suite measures the performance of Vietnamese syllable
+//! processing operations for linguistic analysis optimization.
+
+#![allow(missing_docs)]
+
 use criterion::{criterion_group, criterion_main, Criterion};
 use std::hint::black_box;
 use vi::Syllable;

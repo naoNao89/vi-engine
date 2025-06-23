@@ -1009,3 +1009,75 @@ hybrid_clean_chars_bulk_neon:
 .use_bmi2_bulk:
     pop rbp
     jmp hybrid_clean_chars_bulk_bmi2
+
+# x86_64 Security Handler Function Implementations
+# These functions provide basic security violation handling for x86_64 platforms
+
+# Security violation handler
+# Input: rdi = violation code, rsi = context (address/value)
+# Output: none (logs violation and returns)
+security_violation_handler:
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push r12
+
+    # Save violation parameters
+    mov rbx, rdi  # violation code
+    mov r12, rsi  # context
+
+    # Log security violation (basic implementation)
+    # In a full implementation, this would call into Rust logging
+    # For now, just return to maintain compatibility
+
+    # Restore registers and return
+    pop r12
+    pop rbx
+    pop rbp
+    ret
+
+# Bounds violation handler
+# Input: rdi = violation code, rsi = violating address
+# Output: none (logs violation and returns)
+bounds_violation_handler:
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push r12
+
+    # Save violation parameters
+    mov rbx, rdi  # violation code
+    mov r12, rsi  # violating address
+
+    # Log bounds violation (basic implementation)
+    # In a full implementation, this would call into Rust logging
+    # For now, just return to maintain compatibility
+
+    # Restore registers and return
+    pop r12
+    pop rbx
+    pop rbp
+    ret
+
+# Performance anomaly handler
+# Input: rdi = anomaly code, rsi = timing value
+# Output: none (logs anomaly and returns)
+performance_anomaly_handler:
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push r12
+
+    # Save anomaly parameters
+    mov rbx, rdi  # anomaly code
+    mov r12, rsi  # timing value
+
+    # Log performance anomaly (basic implementation)
+    # In a full implementation, this would call into Rust logging
+    # For now, just return to maintain compatibility
+
+    # Restore registers and return
+    pop r12
+    pop rbx
+    pop rbp
+    ret

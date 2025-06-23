@@ -13,18 +13,15 @@ feature-depth = 1
 # Security vulnerability database
 db-path = "~/.cargo/advisory-db"
 db-urls = ["https://github.com/rustsec/advisory-db"]
-vulnerability = "deny"
-unmaintained = "warn"
+unmaintained = "all"
 yanked = "warn"
-notice = "warn"
 ignore = [
     # Add any specific advisories to ignore here if needed
     # "RUSTSEC-YYYY-NNNN",
 ]
 
 [licenses]
-# License policy - be restrictive but practical
-unlicensed = "deny"
+# License policy - allow common open-source licenses
 allow = [
     "MIT",
     "Apache-2.0",
@@ -33,21 +30,14 @@ allow = [
     "BSD-3-Clause",
     "ISC",
     "Unicode-DFS-2016",
+    "Unicode-3.0",
+    "0BSD",
+    "CC0-1.0",
+    "Zlib",
+    "Unlicense",
 ]
-deny = [
-    "GPL-2.0",
-    "GPL-3.0",
-    "AGPL-1.0",
-    "AGPL-3.0",
-    "LGPL-2.0",
-    "LGPL-2.1",
-    "LGPL-3.0",
-    "MPL-2.0",
-]
-copyleft = "warn"
-allow-osi-fsf-free = "neither"
-default = "deny"
 confidence-threshold = 0.8
+unused-allowed-license = "allow"
 
 [bans]
 # Dependency management
@@ -56,12 +46,6 @@ wildcards = "allow"
 highlight = "all"
 workspace-default-features = "allow"
 external-default-features = "allow"
-allow = [
-    # Allow specific crates that might have multiple versions
-    { name = "windows-sys" },
-    { name = "windows_x86_64_msvc" },
-    { name = "windows_aarch64_msvc" },
-]
 deny = [
     # Deny problematic crates
     { name = "openssl", reason = "Use rustls instead" },
@@ -71,8 +55,7 @@ deny = [
 
 # Skip certain crates from duplicate version checking
 skip = [
-    { name = "windows-sys" },
-    { name = "bitflags" },
+    # Add crates here if they have multiple versions that are acceptable
 ]
 
 skip-tree = [

@@ -1,3 +1,10 @@
+//! Incremental Processing Benchmark Suite
+//!
+//! This benchmark suite compares incremental vs batch processing performance
+//! for Vietnamese text transformation to optimize real-time applications.
+
+#![allow(missing_docs)]
+
 use criterion::{criterion_group, criterion_main, Criterion};
 use std::hint::black_box;
 use vi::{methods::transform_buffer_incremental, transform_buffer, TELEX, VNI};

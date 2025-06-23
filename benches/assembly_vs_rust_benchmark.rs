@@ -1,3 +1,10 @@
+//! Assembly vs Rust Performance Benchmark Suite
+//!
+//! This benchmark suite compares the performance of assembly-optimized functions
+//! against pure Rust implementations for Vietnamese text processing.
+
+#![allow(missing_docs)]
+
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use std::hint::black_box;
 use vi::{clean_char, clean_string, initialize_assembly_safety, SafeAssemblyProcessor};

@@ -1,6 +1,14 @@
+//! Transform Benchmark Suite
+//!
+//! This benchmark suite measures the performance of Vietnamese text transformation
+//! methods including TELEX and VNI input method processing.
+
+#![allow(missing_docs)]
+
 use criterion::{criterion_group, criterion_main, Criterion};
 use std::hint::black_box;
 
+/// Benchmark TELEX input method transformation performance
 pub fn telex_benchmark(c: &mut Criterion) {
     c.bench_function("telex vieejt", |b| {
         b.iter(|| {
@@ -45,6 +53,7 @@ pub fn telex_benchmark(c: &mut Criterion) {
     });
 }
 
+/// Benchmark VNI input method transformation performance
 pub fn vni_benchmark(c: &mut Criterion) {
     c.bench_function("vni viet65", |b| {
         b.iter(|| {

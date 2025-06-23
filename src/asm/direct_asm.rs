@@ -17,7 +17,11 @@ extern "C" {
     /// # Safety
     /// - Input must be a valid Unicode codepoint (≤ 0x10FFFF)
     /// - Function is stateless and thread-safe
+    #[cfg(target_arch = "x86_64")]
     fn apple_hybrid_clean_char_optimized(ch: u32) -> u32;
+
+    #[cfg(target_arch = "aarch64")]
+    fn _apple_hybrid_clean_char_optimized(ch: u32) -> u32;
 
     // Note: Bulk assembly functions are currently disabled due to stack overflow issues
     // Using character-by-character processing as a workaround
@@ -27,18 +31,41 @@ extern "C" {
 #[cfg(feature = "x86_64_assembly")]
 extern "C" {
     /// Process single character with `x86_64` optimizations
+    #[cfg(target_arch = "x86_64")]
     fn hybrid_clean_char_x86_64(ch: u32) -> u32;
+
+    #[cfg(target_arch = "aarch64")]
+    fn _hybrid_clean_char_x86_64(ch: u32) -> u32;
 
     /// Process character array with AVX-512 vectorization
     #[allow(dead_code)]
+    #[cfg(target_arch = "x86_64")]
     fn hybrid_clean_chars_bulk_avx512(input: *const u32, output: *mut u32, len: usize) -> usize;
+
+    #[allow(dead_code)]
+    #[cfg(target_arch = "aarch64")]
+    fn _hybrid_clean_chars_bulk_avx512(input: *const u32, output: *mut u32, len: usize) -> usize;
 
     /// Process character array with BMI2 optimizations
     #[allow(dead_code)]
+    #[cfg(target_arch = "x86_64")]
     fn hybrid_clean_chars_bulk_bmi2(input: *const u32, output: *mut u32, len: usize) -> usize;
 
+    #[allow(dead_code)]
+    #[cfg(target_arch = "aarch64")]
+    fn _hybrid_clean_chars_bulk_bmi2(input: *const u32, output: *mut u32, len: usize) -> usize;
+
     /// Safety-aware bulk processing with control structure
+    #[cfg(target_arch = "x86_64")]
     fn hybrid_clean_chars_bulk_safe(
+        input: *const u32,
+        output: *mut u32,
+        len: usize,
+        control: *const AssemblyControl,
+    ) -> usize;
+
+    #[cfg(target_arch = "aarch64")]
+    fn _hybrid_clean_chars_bulk_safe(
         input: *const u32,
         output: *mut u32,
         len: usize,
@@ -50,11 +77,20 @@ extern "C" {
 #[cfg(feature = "aarch64_assembly")]
 extern "C" {
     /// Process single character with generic ARM64 instructions
+    #[cfg(target_arch = "x86_64")]
     fn hybrid_clean_char_aarch64(ch: u32) -> u32;
+
+    #[cfg(target_arch = "aarch64")]
+    fn _hybrid_clean_char_aarch64(ch: u32) -> u32;
 
     /// Process character array with generic ARM64 optimizations
     #[allow(dead_code)]
+    #[cfg(target_arch = "x86_64")]
     fn hybrid_clean_chars_bulk_neon(input: *const u32, output: *mut u32, len: usize) -> usize;
+
+    #[allow(dead_code)]
+    #[cfg(target_arch = "aarch64")]
+    fn _hybrid_clean_chars_bulk_neon(input: *const u32, output: *mut u32, len: usize) -> usize;
 }
 
 /// Assembly platform detection and selection
@@ -162,7 +198,11 @@ impl AssemblyInterface {
                 {
                     // SAFETY: ch_u32 is validated to be ≤ 0x10FFFF above, making it a valid Unicode codepoint.
                     // The assembly function is stateless and thread-safe.
+                    #[cfg(target_arch = "x86_64")]
                     let result_u32 = unsafe { apple_hybrid_clean_char_optimized(ch_u32) };
+
+                    #[cfg(target_arch = "aarch64")]
+                    let result_u32 = unsafe { _apple_hybrid_clean_char_optimized(ch_u32) };
 
                     // Validate output
                     char::from_u32(result_u32).ok_or_else(|| {
@@ -179,7 +219,11 @@ impl AssemblyInterface {
                 {
                     // SAFETY: ch_u32 is validated to be ≤ 0x10FFFF above, making it a valid Unicode codepoint.
                     // The assembly function is stateless and thread-safe.
+                    #[cfg(target_arch = "x86_64")]
                     let result_u32 = unsafe { hybrid_clean_char_x86_64(ch_u32) };
+
+                    #[cfg(target_arch = "aarch64")]
+                    let result_u32 = unsafe { _hybrid_clean_char_x86_64(ch_u32) };
 
                     // Validate output
                     char::from_u32(result_u32).ok_or_else(|| {
@@ -196,7 +240,11 @@ impl AssemblyInterface {
                 {
                     // SAFETY: ch_u32 is validated to be ≤ 0x10FFFF above, making it a valid Unicode codepoint.
                     // The assembly function is stateless and thread-safe.
+                    #[cfg(target_arch = "x86_64")]
                     let result_u32 = unsafe { hybrid_clean_char_aarch64(ch_u32) };
+
+                    #[cfg(target_arch = "aarch64")]
+                    let result_u32 = unsafe { _hybrid_clean_char_aarch64(ch_u32) };
 
                     // Validate output
                     char::from_u32(result_u32).ok_or_else(|| {
@@ -248,7 +296,11 @@ impl AssemblyInterface {
                         }
 
                         // SAFETY: ch_u32 comes from input slice, assembly function is stateless
+                        #[cfg(target_arch = "x86_64")]
                         let result = unsafe { apple_hybrid_clean_char_optimized(ch_u32) };
+
+                        #[cfg(target_arch = "aarch64")]
+                        let result = unsafe { _apple_hybrid_clean_char_optimized(ch_u32) };
 
                         output[i] = result;
                         processed += 1;
@@ -278,8 +330,19 @@ impl AssemblyInterface {
                     // - Arrays are guaranteed not to overlap due to Rust's borrowing rules
                     // - control pointer is valid for the duration of this call
                     // - Assembly function respects the control structure for cancellation
+                    #[cfg(target_arch = "x86_64")]
                     let processed = unsafe {
                         hybrid_clean_chars_bulk_safe(
+                            input.as_ptr(),
+                            output.as_mut_ptr(),
+                            input.len(),
+                            control as *const AssemblyControl,
+                        )
+                    };
+
+                    #[cfg(target_arch = "aarch64")]
+                    let processed = unsafe {
+                        _hybrid_clean_chars_bulk_safe(
                             input.as_ptr(),
                             output.as_mut_ptr(),
                             input.len(),
@@ -321,8 +384,18 @@ impl AssemblyInterface {
                         // - input and output slices have been validated to have equal length above
                         // - Chunk boundaries are validated to be within array bounds
                         // - Arrays are guaranteed not to overlap due to Rust's borrowing rules
+                        #[cfg(target_arch = "x86_64")]
                         let chunk_processed = unsafe {
                             hybrid_clean_chars_bulk_neon(
+                                input.as_ptr().add(processed),
+                                output.as_mut_ptr().add(processed),
+                                current_chunk,
+                            )
+                        };
+
+                        #[cfg(target_arch = "aarch64")]
+                        let chunk_processed = unsafe {
+                            _hybrid_clean_chars_bulk_neon(
                                 input.as_ptr().add(processed),
                                 output.as_mut_ptr().add(processed),
                                 current_chunk,
@@ -409,7 +482,12 @@ pub fn process_char_unsafe(ch: char) -> char {
             #[cfg(feature = "apple_silicon_assembly")]
             {
                 // Direct Apple Silicon assembly call
+                #[cfg(target_arch = "x86_64")]
                 let result = unsafe { apple_hybrid_clean_char_optimized(ch as u32) };
+
+                #[cfg(target_arch = "aarch64")]
+                let result = unsafe { _apple_hybrid_clean_char_optimized(ch as u32) };
+
                 char::from_u32(result).unwrap_or(ch)
             }
             #[cfg(not(feature = "apple_silicon_assembly"))]
@@ -419,7 +497,12 @@ pub fn process_char_unsafe(ch: char) -> char {
             #[cfg(feature = "x86_64_assembly")]
             {
                 // Direct x86_64 assembly call
+                #[cfg(target_arch = "x86_64")]
                 let result = unsafe { hybrid_clean_char_x86_64(ch as u32) };
+
+                #[cfg(target_arch = "aarch64")]
+                let result = unsafe { _hybrid_clean_char_x86_64(ch as u32) };
+
                 char::from_u32(result).unwrap_or(ch)
             }
             #[cfg(not(feature = "x86_64_assembly"))]
@@ -429,7 +512,12 @@ pub fn process_char_unsafe(ch: char) -> char {
             #[cfg(feature = "aarch64_assembly")]
             {
                 // Direct ARM64 assembly call
+                #[cfg(target_arch = "x86_64")]
                 let result = unsafe { hybrid_clean_char_aarch64(ch as u32) };
+
+                #[cfg(target_arch = "aarch64")]
+                let result = unsafe { _hybrid_clean_char_aarch64(ch as u32) };
+
                 char::from_u32(result).unwrap_or(ch)
             }
             #[cfg(not(feature = "aarch64_assembly"))]

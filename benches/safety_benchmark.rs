@@ -1,7 +1,10 @@
-//! Safety overhead benchmarks
+//! Assembly Safety Benchmark Suite
 //!
-//! These benchmarks measure the performance impact of safety mechanisms
-//! to ensure they add minimal overhead to assembly operations.
+//! This benchmark suite measures the performance overhead of safety mechanisms
+//! in assembly-optimized Vietnamese text processing functions to ensure they
+//! add minimal overhead to assembly operations.
+
+#![allow(missing_docs)]
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::hint::black_box;

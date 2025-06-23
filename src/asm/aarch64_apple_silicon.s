@@ -279,6 +279,10 @@ apple_vietnamese_specific_1ea0:
 .global _apple_hybrid_clean_chars_bulk_neon_optimized_safe
 .global _apple_hybrid_clean_chars_bulk_safe
 
+// Double underscore versions for Rust name mangling compatibility
+.global __apple_hybrid_clean_char_optimized
+.global __apple_hybrid_clean_chars_bulk_safe
+
 // Note: _hybrid_clean_chars_bulk_neon is exported by aarch64_kernels.s
 
 // Security violation handlers optimized for Apple Silicon ARM64
@@ -1218,3 +1222,12 @@ _hybrid_clean_chars_bulk_neon:
 
 // Note: _hybrid_clean_chars_bulk_neon is provided by aarch64_kernels.s
 // to avoid duplicate symbol errors
+
+// Double underscore compatibility aliases for Rust name mangling
+__apple_hybrid_clean_char_optimized:
+    // Delegate to the single underscore version
+    b _apple_hybrid_clean_char_optimized
+
+__apple_hybrid_clean_chars_bulk_safe:
+    // Delegate to the single underscore version
+    b _apple_hybrid_clean_chars_bulk_safe

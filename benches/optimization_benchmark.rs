@@ -1,3 +1,10 @@
+//! Optimization Benchmark Suite
+//!
+//! This benchmark suite compares different optimization strategies for Vietnamese
+//! character processing to identify the most efficient approaches.
+
+#![allow(missing_docs)]
+
 use criterion::{criterion_group, criterion_main, Criterion};
 use std::hint::black_box;
 use vi::util::clean_char;

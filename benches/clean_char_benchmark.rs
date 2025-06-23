@@ -1,3 +1,10 @@
+//! Clean Character Benchmark Suite
+//!
+//! This benchmark suite measures the performance of the `clean_char` function
+//! across different types of input characters to identify optimization opportunities.
+
+#![allow(missing_docs)]
+
 use criterion::{criterion_group, criterion_main, Criterion};
 use std::hint::black_box;
 use vi::util::clean_char;
