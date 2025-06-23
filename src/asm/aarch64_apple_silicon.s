@@ -279,8 +279,7 @@ apple_vietnamese_specific_1ea0:
 .global _apple_hybrid_clean_chars_bulk_neon_optimized_safe
 .global _apple_hybrid_clean_chars_bulk_safe
 
-// Additional function exports for compatibility
-.global _hybrid_clean_chars_bulk_neon
+// Note: _hybrid_clean_chars_bulk_neon is exported by aarch64_kernels.s
 
 // Security violation handlers optimized for Apple Silicon ARM64
 
@@ -1216,3 +1215,6 @@ _hybrid_clean_chars_bulk_neon:
     mov x0, x3  // Return processed count
     ldp x29, x30, [sp], #16
     ret
+
+// Note: _hybrid_clean_chars_bulk_neon is provided by aarch64_kernels.s
+// to avoid duplicate symbol errors

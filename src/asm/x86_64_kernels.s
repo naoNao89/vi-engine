@@ -174,6 +174,7 @@ sidechannel_protection:
 .global hybrid_clean_char_avx512
 .global hybrid_clean_chars_bulk_avx512
 .global hybrid_clean_chars_bulk_bmi2
+.global hybrid_clean_chars_bulk_x86_64_safe
 
 # Security and monitoring function exports
 .global security_violation_handler
