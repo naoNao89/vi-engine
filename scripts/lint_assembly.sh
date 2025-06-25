@@ -163,10 +163,24 @@ lint_x86_64() {
     # Method 1: Use LLVM assembler (preferred for x86_64 on macOS)
     if command_exists llvm-mc; then
         log "Using LLVM assembler (llvm-mc)"
-        if llvm-mc -arch=x86-64 -filetype=obj "$file" -o "$temp_obj" 2>&1; then
-            echo -e "${GREEN}✓${NC} LLVM assembler: PASS"
+        # Preprocess the assembly file first to handle conditional compilation
+        local preprocessed_file="$TEMP_DIR/${basename}_preprocessed.s"
+        local platform_defines=""
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            platform_defines="-D__APPLE__"
         else
-            echo -e "${RED}✗${NC} LLVM assembler: FAIL"
+            platform_defines="-D__linux__"
+        fi
+
+        if clang -E $platform_defines -x assembler-with-cpp "$file" -o "$preprocessed_file" 2>/dev/null; then
+            if llvm-mc -arch=x86-64 -filetype=obj "$preprocessed_file" -o "$temp_obj" 2>&1; then
+                echo -e "${GREEN}✓${NC} LLVM assembler: PASS"
+            else
+                echo -e "${RED}✗${NC} LLVM assembler: FAIL"
+                return 1
+            fi
+        else
+            echo -e "${RED}✗${NC} LLVM assembler: FAIL (preprocessing)"
             return 1
         fi
     fi
@@ -174,7 +188,7 @@ lint_x86_64() {
     # Method 2: Use clang if available
     if command_exists clang; then
         log "Using clang assembler"
-        if clang -target x86_64-apple-macos -c "$file" -o "$temp_obj" 2>&1; then
+        if clang -target x86_64-apple-macos -x assembler-with-cpp -c "$file" -o "$temp_obj" 2>&1; then
             echo -e "${GREEN}✓${NC} Clang assembler: PASS"
         else
             echo -e "${RED}✗${NC} Clang assembler: FAIL"

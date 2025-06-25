@@ -21,7 +21,12 @@
 .text
 
 # Security and monitoring constants
+# Cross-platform section definition for read-only data
+#ifdef __APPLE__
+.section __TEXT,__const
+#else
 .section .rodata
+#endif
 .p2align 6
 
 # Stack canary values for protection
@@ -187,7 +192,12 @@ sidechannel_protection:
 .global system_integrity_monitor
 
 # Vietnamese character mapping constants
+# Cross-platform section definition for read-only data
+#ifdef __APPLE__
+.section __TEXT,__const
+#else
 .section .rodata
+#endif
 .p2align 6
 
 # Complete Vietnamese character lookup table (cache-line aligned)
