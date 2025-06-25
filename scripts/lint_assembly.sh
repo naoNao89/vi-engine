@@ -304,6 +304,11 @@ main() {
     local total_files=0
     local passed_files=0
 
+    # Debug: Ensure variables are properly initialized
+    if [[ "$OSTYPE" != "darwin"* ]]; then
+        echo "Debug: Variables initialized - exit_code=$exit_code, total_files=$total_files, passed_files=$passed_files"
+    fi
+
     # Debug: Add verbose error handling for Ubuntu
     if [[ "$OSTYPE" != "darwin"* ]]; then
         echo "Debug: Starting main function on Ubuntu..."
@@ -341,9 +346,11 @@ main() {
 
         if [[ "$OSTYPE" != "darwin"* ]]; then
             echo "Debug: File $file is a regular file, proceeding..."
+            echo "Debug: About to increment total_files (current value: $total_files)"
         fi
 
-        ((total_files++))
+        # Use more compatible arithmetic - avoid (( )) which might have issues
+        total_files=$((total_files + 1))
         if [[ "$OSTYPE" != "darwin"* ]]; then
             echo "Debug: Incremented total_files to $total_files"
         fi
