@@ -324,11 +324,18 @@ main() {
 
     if [[ "$OSTYPE" != "darwin"* ]]; then
         echo "Debug: Directory exists, continuing..."
+        echo "Debug: Starting file processing loop..."
     fi
-    
+
     # Lint each assembly file
     for file in "$ASM_DIR"/*.s; do
+        if [[ "$OSTYPE" != "darwin"* ]]; then
+            echo "Debug: Found file: $file"
+        fi
         if [[ ! -f "$file" ]]; then
+            if [[ "$OSTYPE" != "darwin"* ]]; then
+                echo "Debug: File $file is not a regular file, skipping..."
+            fi
             continue
         fi
         
