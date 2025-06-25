@@ -49,20 +49,6 @@ echo -e "${BLUE}=== Assembly Linting for vi-engine ===${NC}"
 echo "Linting directory: $ASM_DIR"
 echo
 
-# Debug: Check available tools on Ubuntu
-if [[ "$OSTYPE" != "darwin"* ]]; then
-    echo "Debug: Checking available LLVM tools on Ubuntu..."
-    echo "OSTYPE: $OSTYPE"
-    echo "Available llvm commands:"
-    ls /usr/bin/llvm* 2>/dev/null || echo "No llvm commands found in /usr/bin/"
-    echo "Available clang commands:"
-    ls /usr/bin/clang* 2>/dev/null || echo "No clang commands found in /usr/bin/"
-    echo "PATH: $PATH"
-    echo "which llvm-mc: $(which llvm-mc 2>/dev/null || echo 'not found')"
-    echo "which clang: $(which clang 2>/dev/null || echo 'not found')"
-    echo
-fi
-
 # Function to log messages
 log() {
     if [[ "$VERBOSE" == true ]]; then
@@ -304,82 +290,32 @@ main() {
     local total_files=0
     local passed_files=0
 
-    # Debug: Ensure variables are properly initialized
-    if [[ "$OSTYPE" != "darwin"* ]]; then
-        echo "Debug: Variables initialized - exit_code=$exit_code, total_files=$total_files, passed_files=$passed_files"
-    fi
-
-    # Debug: Add verbose error handling for Ubuntu
-    if [[ "$OSTYPE" != "darwin"* ]]; then
-        echo "Debug: Starting main function on Ubuntu..."
-        echo "Debug: ASM_DIR = $ASM_DIR"
-        echo "Debug: Checking if directory exists..."
-        # Don't use set -e as it exits immediately on any error
-        # set -x  # Print commands as they execute (for debugging)
-    fi
-
     # Check if assembly directory exists
     if [[ ! -d "$ASM_DIR" ]]; then
         echo -e "${RED}Error:${NC} Assembly directory '$ASM_DIR' not found"
-        if [[ "$OSTYPE" != "darwin"* ]]; then
-            echo "Debug: Directory check failed, exiting..."
-        fi
         exit 1
-    fi
-
-    if [[ "$OSTYPE" != "darwin"* ]]; then
-        echo "Debug: Directory exists, continuing..."
-        echo "Debug: Starting file processing loop..."
     fi
 
     # Lint each assembly file
     for file in "$ASM_DIR"/*.s; do
-        if [[ "$OSTYPE" != "darwin"* ]]; then
-            echo "Debug: Found file: $file"
-        fi
         if [[ ! -f "$file" ]]; then
-            if [[ "$OSTYPE" != "darwin"* ]]; then
-                echo "Debug: File $file is not a regular file, skipping..."
-            fi
             continue
         fi
 
-        if [[ "$OSTYPE" != "darwin"* ]]; then
-            echo "Debug: File $file is a regular file, proceeding..."
-            echo "Debug: About to increment total_files (current value: $total_files)"
-        fi
-
-        # Use more compatible arithmetic - avoid (( )) which might have issues
+        # Use compatible arithmetic syntax for cross-platform compatibility
         total_files=$((total_files + 1))
-        if [[ "$OSTYPE" != "darwin"* ]]; then
-            echo "Debug: Incremented total_files to $total_files"
-        fi
         echo
-
-        # Debug: Show which file is being processed
-        if [[ "$OSTYPE" != "darwin"* ]]; then
-            echo "Debug: Processing file: $file"
-        fi
 
         # Determine architecture and lint accordingly
         if [[ "$file" == *"aarch64"* ]] || [[ "$file" == *"arm64"* ]]; then
-            if [[ "$OSTYPE" != "darwin"* ]]; then
-                echo "Debug: Detected ARM64 file, calling lint_arm64..."
-            fi
             if lint_arm64 "$file"; then
-                ((passed_files++))
-                if [[ "$OSTYPE" != "darwin"* ]]; then
-                    echo "Debug: ARM64 linting passed"
-                fi
+                passed_files=$((passed_files + 1))
             else
                 exit_code=1
-                if [[ "$OSTYPE" != "darwin"* ]]; then
-                    echo "Debug: ARM64 linting failed"
-                fi
             fi
         elif [[ "$file" == *"x86_64"* ]]; then
             if lint_x86_64 "$file"; then
-                ((passed_files++))
+                passed_files=$((passed_files + 1))
             else
                 exit_code=1
             fi
