@@ -562,8 +562,11 @@ fn preprocess_assembly_file(asm_file: &str, target_os: &str) -> String {
     use std::process::Command;
 
     let out_dir = env::var("OUT_DIR").unwrap();
-    let preprocessed_file = format!("{}/preprocessed_{}", out_dir,
-        Path::new(asm_file).file_name().unwrap().to_str().unwrap());
+    let preprocessed_file = format!(
+        "{}/preprocessed_{}",
+        out_dir,
+        Path::new(asm_file).file_name().unwrap().to_str().unwrap()
+    );
 
     // Define platform-specific macros
     let platform_defines = if target_os == "macos" {
@@ -587,7 +590,10 @@ fn preprocess_assembly_file(asm_file: &str, target_os: &str) -> String {
         Ok(result) => {
             if result.status.success() {
                 if env::var("VI_BUILD_VERBOSE").is_ok() || env::var("CARGO_VERBOSE").is_ok() {
-                    println!("cargo:warning=Successfully preprocessed assembly file: {}", asm_file);
+                    println!(
+                        "cargo:warning=Successfully preprocessed assembly file: {}",
+                        asm_file
+                    );
                 }
                 preprocessed_file
             } else {

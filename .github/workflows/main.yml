@@ -66,15 +66,15 @@ jobs:
           # Native builds with assembly
           - target: aarch64-apple-darwin
             os: macos-14  # Apple Silicon runner
-            features: "assembly_kernels"
+            features: "auto_assembly"
             test: true
           - target: x86_64-apple-darwin
             os: macos-latest
-            features: "assembly_kernels"
+            features: "auto_assembly"
             test: true
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-            features: "assembly_kernels"
+            features: "auto_assembly"
             test: true
           # Cross-compilation builds (assembly disabled)
           - target: aarch64-unknown-linux-gnu
@@ -172,7 +172,7 @@ jobs:
 
       - name: Run assembly safety tests
         run: |
-          cargo test safety_tests --features assembly_kernels
+          cargo test safety_tests --features auto_assembly
 
   # Cross-compilation validation
   cross-compile:
@@ -255,7 +255,7 @@ jobs:
       - name: Test assembly feature flags
         run: |
           # Test with assembly enabled
-          cargo test --features assembly_kernels
+          cargo test --features auto_assembly
           # Test with assembly disabled
           cargo test --features no_assembly
 
@@ -281,7 +281,7 @@ jobs:
 
       - name: Test memory safety with assembly
         run: |
-          cargo test async_safety_tests --features assembly_kernels
+          cargo test async_safety_tests --features auto_assembly
 
   # Final integration check
   integration-check:
