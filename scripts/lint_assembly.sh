@@ -303,6 +303,13 @@ main() {
     local exit_code=0
     local total_files=0
     local passed_files=0
+
+    # Debug: Add verbose error handling for Ubuntu
+    if [[ "$OSTYPE" != "darwin"* ]]; then
+        echo "Debug: Starting main function on Ubuntu..."
+        set -e  # Exit on any error
+        set -x  # Print commands as they execute (for debugging)
+    fi
     
     # Check if assembly directory exists
     if [[ ! -d "$ASM_DIR" ]]; then
