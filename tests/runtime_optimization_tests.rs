@@ -228,6 +228,7 @@ fn test_error_handling() -> Result<(), AssemblyError> {
     let mut processor = ProcessorBuilder::new()
         .with_fallback(true)
         .with_max_retries(1)
+        .with_timeout(10000) // 10 second timeout for long string processing
         .build()?;
 
     // Test empty string handling
