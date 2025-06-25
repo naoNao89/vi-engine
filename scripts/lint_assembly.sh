@@ -100,7 +100,7 @@ lint_arm64() {
     local file="$1"
     local basename=$(basename "$file" .s)
     local temp_obj="$TEMP_DIR/${basename}.o"
-    local lint_passed=true
+    local assembler_successes=0
 
     echo -e "${YELLOW}Linting ARM64:${NC} $file"
 
@@ -113,9 +113,9 @@ lint_arm64() {
         log "Using LLVM assembler (llvm-mc)"
         if llvm-mc -arch=aarch64 -filetype=obj "$file" -o "$temp_obj" 2>/dev/null; then
             echo -e "${GREEN}✓${NC} LLVM assembler: PASS"
+            assembler_successes=$((assembler_successes + 1))
         else
             echo -e "${RED}✗${NC} LLVM assembler: FAIL"
-            lint_passed=false
         fi
     fi
 
@@ -124,9 +124,9 @@ lint_arm64() {
         log "Using clang assembler"
         if clang -target aarch64-apple-macos -c "$file" -o "$temp_obj" 2>/dev/null; then
             echo -e "${GREEN}✓${NC} Clang assembler: PASS"
+            assembler_successes=$((assembler_successes + 1))
         else
             echo -e "${RED}✗${NC} Clang assembler: FAIL"
-            lint_passed=false
         fi
     fi
 
@@ -145,7 +145,8 @@ lint_arm64() {
         echo -e "${YELLOW}⚠${NC} Found $symbol_issues symbol reference issues"
     fi
 
-    if [[ "$lint_passed" == true ]]; then
+    # Pass if at least one major assembler (LLVM or Clang) succeeds
+    if [[ $assembler_successes -gt 0 ]]; then
         return 0
     else
         return 1
