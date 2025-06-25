@@ -666,11 +666,33 @@ impl SafeAssemblyProcessor {
         input: &[u32],
         output: &mut [u32],
     ) -> Result<usize, AssemblyError> {
-        // Use actual assembly interface with safety integration
-        let assembly_interface = crate::asm::direct_asm::get_assembly_interface();
+        #[cfg(not(feature = "no_assembly"))]
+        {
+            // Use actual assembly interface with safety integration
+            let assembly_interface = crate::asm::direct_asm::get_assembly_interface();
 
-        // Call assembly with safety control structure
-        assembly_interface.process_chars_bulk_safe(input, output, &self.control)
+            // Call assembly with safety control structure
+            assembly_interface.process_chars_bulk_safe(input, output, &self.control)
+        }
+        #[cfg(feature = "no_assembly")]
+        {
+            // Fallback to Rust implementation when assembly is disabled
+            self.process_chars_rust_fallback(input, output)
+        }
+    }
+
+    /// Rust fallback implementation for bulk processing
+    fn process_chars_rust_fallback(
+        &self,
+        input: &[u32],
+        output: &mut [u32],
+    ) -> Result<usize, AssemblyError> {
+        for (i, &ch_u32) in input.iter().enumerate() {
+            let ch = char::from_u32(ch_u32).unwrap_or('\u{FFFD}');
+            let result = crate::util::clean_char(ch);
+            output[i] = result as u32;
+        }
+        Ok(input.len())
     }
 
     /// Process single character with safety checks
