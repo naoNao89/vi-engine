@@ -262,8 +262,8 @@ fn compile_x86_64_assembly() {
                 }
             }
         } else {
-            // Linux and other platforms can use --64 flag
-            build.flag("--64");
+            // Linux and other platforms use -m64 flag for 64-bit assembly
+            build.flag("-m64");
             if is_feature_available("bmi2") {
                 build.flag("-mbmi2");
             }
