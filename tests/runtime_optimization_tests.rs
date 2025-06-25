@@ -413,7 +413,6 @@ fn test_unavailable_strategy_error() {
                 assert!(msg.contains("not available") || msg.contains("Strategy"));
             }
             Err(other) => {
-                #[allow(clippy::panic)]
                 panic!("Unexpected error type for unavailable strategy: {other:?}");
             }
         }
@@ -441,7 +440,6 @@ fn test_force_assembly_behavior() {
             assert!(msg.contains("No assembly optimizations available"));
         }
         Err(other) => {
-            #[allow(clippy::panic)]
             panic!("Unexpected error type for force assembly: {other:?}");
         }
     }

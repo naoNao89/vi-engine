@@ -1,3 +1,8 @@
+//! Tests for incremental Vietnamese input processing
+//!
+//! This module contains tests for the incremental buffer functionality
+//! that allows real-time Vietnamese text input processing.
+
 use vi::{
     methods::{
         transform_buffer_incremental, transform_buffer_incremental_with_style, IncrementalBuffer,

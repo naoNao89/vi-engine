@@ -1,3 +1,7 @@
+//! Example demonstrating VNI input method processing
+//!
+//! This example shows how to process Vietnamese text using the VNI input method.
+
 fn main() {
     let inputs = "anh se4 lam2, lam2 ta6t1 ca3 de963 d9uo75c che6t1 thay em";
 

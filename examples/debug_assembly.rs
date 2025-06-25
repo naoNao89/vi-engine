@@ -1,3 +1,8 @@
+//! Example demonstrating assembly debugging and performance comparison
+//!
+//! This example shows how to debug assembly operations and compare performance
+//! between Rust and assembly implementations.
+
 use std::time::Instant;
 use vi::{
     asm_clean_char, clean_char, get_assembly_info, initialize_assembly_safety,

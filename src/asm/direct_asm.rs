@@ -362,7 +362,9 @@ impl AssemblyInterface {
                     Ok(processed)
                 }
                 #[cfg(not(feature = "x86_64_assembly"))]
-                self.process_chars_rust_fallback(input, output)
+                {
+                    self.process_chars_rust_fallback(input, output)
+                }
             }
             AssemblyPlatform::GenericARM64 => {
                 #[cfg(feature = "aarch64_assembly")]

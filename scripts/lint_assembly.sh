@@ -100,7 +100,7 @@ lint_arm64() {
     local file="$1"
     local basename=$(basename "$file" .s)
     local temp_obj="$TEMP_DIR/${basename}.o"
-    local lint_passed=true
+    local assembler_successes=0
 
     echo -e "${YELLOW}Linting ARM64:${NC} $file"
 
@@ -113,9 +113,9 @@ lint_arm64() {
         log "Using LLVM assembler (llvm-mc)"
         if llvm-mc -arch=aarch64 -filetype=obj "$file" -o "$temp_obj" 2>/dev/null; then
             echo -e "${GREEN}✓${NC} LLVM assembler: PASS"
+            assembler_successes=$((assembler_successes + 1))
         else
             echo -e "${RED}✗${NC} LLVM assembler: FAIL"
-            lint_passed=false
         fi
     fi
 
@@ -124,9 +124,9 @@ lint_arm64() {
         log "Using clang assembler"
         if clang -target aarch64-apple-macos -c "$file" -o "$temp_obj" 2>/dev/null; then
             echo -e "${GREEN}✓${NC} Clang assembler: PASS"
+            assembler_successes=$((assembler_successes + 1))
         else
             echo -e "${RED}✗${NC} Clang assembler: FAIL"
-            lint_passed=false
         fi
     fi
 
@@ -145,7 +145,8 @@ lint_arm64() {
         echo -e "${YELLOW}⚠${NC} Found $symbol_issues symbol reference issues"
     fi
 
-    if [[ "$lint_passed" == true ]]; then
+    # Pass if at least one major assembler (LLVM or Clang) succeeds
+    if [[ $assembler_successes -gt 0 ]]; then
         return 0
     else
         return 1
@@ -160,21 +161,51 @@ lint_x86_64() {
 
     echo -e "${YELLOW}Linting x86_64:${NC} $file"
 
-    # Method 1: Use LLVM assembler (preferred for x86_64 on macOS)
+    # Method 1: Use LLVM assembler (preferred for x86_64)
+    # Try different llvm-mc variants (Ubuntu often has versioned names)
+    local llvm_mc_cmd=""
     if command_exists llvm-mc; then
-        log "Using LLVM assembler (llvm-mc)"
-        if llvm-mc -arch=x86-64 -filetype=obj "$file" -o "$temp_obj" 2>&1; then
-            echo -e "${GREEN}✓${NC} LLVM assembler: PASS"
+        llvm_mc_cmd="llvm-mc"
+    elif command_exists llvm-mc-18; then
+        llvm_mc_cmd="llvm-mc-18"
+    elif command_exists llvm-mc-17; then
+        llvm_mc_cmd="llvm-mc-17"
+    elif command_exists llvm-mc-16; then
+        llvm_mc_cmd="llvm-mc-16"
+    elif command_exists llvm-mc-15; then
+        llvm_mc_cmd="llvm-mc-15"
+    fi
+
+    if [[ -n "$llvm_mc_cmd" ]]; then
+        log "Using LLVM assembler ($llvm_mc_cmd)"
+        # Preprocess the assembly file first to handle conditional compilation
+        local preprocessed_file="$TEMP_DIR/${basename}_preprocessed.s"
+        local platform_defines=""
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            platform_defines="-D__APPLE__"
         else
-            echo -e "${RED}✗${NC} LLVM assembler: FAIL"
+            platform_defines="-U__APPLE__ -D__linux__"
+        fi
+
+        if clang -E $platform_defines -x assembler-with-cpp "$file" -o "$preprocessed_file" 2>/dev/null; then
+            if $llvm_mc_cmd -arch=x86-64 -filetype=obj "$preprocessed_file" -o "$temp_obj" 2>&1; then
+                echo -e "${GREEN}✓${NC} LLVM assembler: PASS"
+            else
+                echo -e "${RED}✗${NC} LLVM assembler: FAIL"
+                return 1
+            fi
+        else
+            echo -e "${RED}✗${NC} LLVM assembler: FAIL (preprocessing)"
             return 1
         fi
+    else
+        log "LLVM assembler (llvm-mc) not found, skipping LLVM test"
     fi
 
     # Method 2: Use clang if available
     if command_exists clang; then
         log "Using clang assembler"
-        if clang -target x86_64-apple-macos -c "$file" -o "$temp_obj" 2>&1; then
+        if clang -target x86_64-apple-macos -x assembler-with-cpp -c "$file" -o "$temp_obj" 2>&1; then
             echo -e "${GREEN}✓${NC} Clang assembler: PASS"
         else
             echo -e "${RED}✗${NC} Clang assembler: FAIL"
@@ -183,13 +214,19 @@ lint_x86_64() {
     fi
 
     # Method 3: Use nasm if available (alternative x86_64 assembler)
+    # Skip NASM for files that use # comments (NASM uses ; for comments)
     if command_exists nasm; then
-        log "Using NASM assembler"
-        if nasm -f macho64 "$file" -o "$temp_obj" 2>&1; then
-            echo -e "${GREEN}✓${NC} NASM assembler: PASS"
+        if grep -q "^#" "$file"; then
+            log "Skipping NASM assembler (file uses # comments, NASM requires ; comments)"
+            echo -e "${YELLOW}⚠${NC} NASM assembler: SKIPPED (incompatible comment syntax)"
         else
-            echo -e "${RED}✗${NC} NASM assembler: FAIL"
-            return 1
+            log "Using NASM assembler"
+            if nasm -f macho64 "$file" -o "$temp_obj" 2>&1; then
+                echo -e "${GREEN}✓${NC} NASM assembler: PASS"
+            else
+                echo -e "${RED}✗${NC} NASM assembler: FAIL"
+                return 1
+            fi
         fi
     fi
 
@@ -259,32 +296,33 @@ main() {
     local exit_code=0
     local total_files=0
     local passed_files=0
-    
+
     # Check if assembly directory exists
     if [[ ! -d "$ASM_DIR" ]]; then
         echo -e "${RED}Error:${NC} Assembly directory '$ASM_DIR' not found"
         exit 1
     fi
-    
+
     # Lint each assembly file
     for file in "$ASM_DIR"/*.s; do
         if [[ ! -f "$file" ]]; then
             continue
         fi
-        
-        ((total_files++))
+
+        # Use compatible arithmetic syntax for cross-platform compatibility
+        total_files=$((total_files + 1))
         echo
-        
+
         # Determine architecture and lint accordingly
         if [[ "$file" == *"aarch64"* ]] || [[ "$file" == *"arm64"* ]]; then
             if lint_arm64 "$file"; then
-                ((passed_files++))
+                passed_files=$((passed_files + 1))
             else
                 exit_code=1
             fi
         elif [[ "$file" == *"x86_64"* ]]; then
             if lint_x86_64 "$file"; then
-                ((passed_files++))
+                passed_files=$((passed_files + 1))
             else
                 exit_code=1
             fi

@@ -173,8 +173,15 @@ fn configure_auto_assembly(target_arch: &str, target_os: &str) {
                 println!("cargo:warning=Auto-enabled generic ARM64 assembly optimizations");
             }
         }
+        ("x86_64", "linux") => {
+            // x86_64 on Linux - temporarily disabled due to runtime segfault issues
+            println!("cargo:rustc-cfg=feature=\"no_assembly\"");
+            if env::var("VI_BUILD_VERBOSE").is_ok() || env::var("CARGO_VERBOSE").is_ok() {
+                println!("cargo:warning=x86_64 assembly temporarily disabled on Linux due to runtime issues");
+            }
+        }
         ("x86_64", _) => {
-            // x86_64 on any OS
+            // x86_64 on other OS (macOS, Windows, etc.)
             println!("cargo:rustc-cfg=feature=\"x86_64_assembly\"");
             if env::var("VI_BUILD_VERBOSE").is_ok() || env::var("CARGO_VERBOSE").is_ok() {
                 println!("cargo:warning=Auto-enabled x86_64 assembly optimizations");
@@ -240,12 +247,23 @@ fn compile_x86_64_assembly() {
         return;
     }
 
+    // Temporarily disable assembly on Linux due to runtime segfault issues
+    // The assembly compiles correctly but has runtime memory safety issues on Linux
+    if target_os == "linux" {
+        println!("cargo:warning=Assembly compilation temporarily disabled on Linux due to runtime issues");
+        println!("cargo:rustc-cfg=feature=\"no_assembly\"");
+        return;
+    }
+
     if Path::new(asm_file).exists() {
         println!("cargo:rerun-if-changed={asm_file}");
 
-        // Use cc crate to compile assembly with minimal flags to avoid warnings
+        // Preprocess the assembly file to handle conditional compilation
+        let preprocessed_file = preprocess_assembly_file(asm_file, &target_os);
+
+        // Use cc crate to compile the preprocessed assembly file
         let mut build = cc::Build::new();
-        build.file(asm_file).flag("-x").flag("assembler");
+        build.file(&preprocessed_file).flag("-x").flag("assembler");
 
         // Use appropriate flags based on target and cross-compilation
         if target_os == "macos" {
@@ -262,8 +280,8 @@ fn compile_x86_64_assembly() {
                 }
             }
         } else {
-            // Linux and other platforms can use --64 flag
-            build.flag("--64");
+            // Linux and other platforms use -m64 flag for 64-bit assembly
+            build.flag("-m64");
             if is_feature_available("bmi2") {
                 build.flag("-mbmi2");
             }
@@ -552,4 +570,106 @@ fn generate_performance_constants() {
             println!("cargo:rustc-cfg=performance_mode=\"debug\"");
         }
     }
+}
+
+/// Preprocess assembly file to handle conditional compilation directives
+fn preprocess_assembly_file(asm_file: &str, target_os: &str) -> String {
+    use std::process::Command;
+
+    let out_dir = env::var("OUT_DIR").unwrap();
+    let preprocessed_file = format!(
+        "{}/preprocessed_{}",
+        out_dir,
+        Path::new(asm_file).file_name().unwrap().to_str().unwrap()
+    );
+
+    // Define platform-specific macros
+    let platform_defines = if target_os == "macos" {
+        vec!["-D__APPLE__"]
+    } else {
+        vec!["-U__APPLE__", "-D__linux__"]
+    };
+
+    // Use clang to preprocess the assembly file
+    let output = Command::new("clang")
+        .arg("-E") // Preprocess only
+        .args(&platform_defines)
+        .arg("-x")
+        .arg("assembler-with-cpp")
+        .arg(asm_file)
+        .arg("-o")
+        .arg(&preprocessed_file)
+        .output();
+
+    match output {
+        Ok(result) => {
+            if result.status.success() {
+                if env::var("VI_BUILD_VERBOSE").is_ok() || env::var("CARGO_VERBOSE").is_ok() {
+                    println!(
+                        "cargo:warning=Successfully preprocessed assembly file: {}",
+                        asm_file
+                    );
+                }
+                preprocessed_file
+            } else {
+                // Fallback: create a simple preprocessed version manually
+                println!("cargo:warning=Clang preprocessing failed, using manual preprocessing");
+                manual_preprocess_assembly(asm_file, target_os, &preprocessed_file)
+            }
+        }
+        Err(_) => {
+            // Fallback: create a simple preprocessed version manually
+            println!("cargo:warning=Clang not available, using manual preprocessing");
+            manual_preprocess_assembly(asm_file, target_os, &preprocessed_file)
+        }
+    }
+}
+
+/// Manual preprocessing fallback for when clang is not available
+fn manual_preprocess_assembly(asm_file: &str, target_os: &str, output_file: &str) -> String {
+    use std::fs;
+    use std::io::Write;
+
+    let content = fs::read_to_string(asm_file)
+        .unwrap_or_else(|_| panic!("Failed to read assembly file: {}", asm_file));
+
+    let is_apple = target_os == "macos";
+    let mut output = String::new();
+    let mut in_ifdef = false;
+    let mut ifdef_condition = false;
+    let mut ifdef_depth = 0;
+
+    for line in content.lines() {
+        let trimmed = line.trim();
+
+        if trimmed.starts_with("#ifdef __APPLE__") {
+            in_ifdef = true;
+            ifdef_condition = is_apple;
+            ifdef_depth += 1;
+            continue;
+        } else if trimmed.starts_with("#else") && ifdef_depth > 0 {
+            ifdef_condition = !ifdef_condition;
+            continue;
+        } else if trimmed.starts_with("#endif") && ifdef_depth > 0 {
+            ifdef_depth -= 1;
+            if ifdef_depth == 0 {
+                in_ifdef = false;
+            }
+            continue;
+        }
+
+        // Include line if we're not in an ifdef block, or if the condition matches
+        if !in_ifdef || ifdef_condition {
+            output.push_str(line);
+            output.push('\n');
+        }
+    }
+
+    // Write the preprocessed content to the output file
+    let mut file = fs::File::create(output_file)
+        .unwrap_or_else(|_| panic!("Failed to create preprocessed file: {}", output_file));
+    file.write_all(output.as_bytes())
+        .unwrap_or_else(|_| panic!("Failed to write preprocessed file: {}", output_file));
+
+    output_file.to_string()
 }

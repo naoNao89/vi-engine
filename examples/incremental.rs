@@ -1,3 +1,7 @@
+//! Example demonstrating incremental Vietnamese input processing
+//!
+//! This example shows how to use the incremental buffer for real-time Vietnamese text input.
+
 use std::io::{self, Write};
 use vi::{methods::transform_buffer_incremental, TELEX, VNI};
 

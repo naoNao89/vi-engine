@@ -1,3 +1,7 @@
+//! Example demonstrating custom input method definitions
+//!
+//! This example shows how to create and use custom Vietnamese input method definitions.
+
 use phf::phf_map;
 use vi::{
     processor::{LetterModification, ToneMark},
