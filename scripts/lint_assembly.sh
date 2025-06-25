@@ -338,8 +338,15 @@ main() {
             fi
             continue
         fi
-        
+
+        if [[ "$OSTYPE" != "darwin"* ]]; then
+            echo "Debug: File $file is a regular file, proceeding..."
+        fi
+
         ((total_files++))
+        if [[ "$OSTYPE" != "darwin"* ]]; then
+            echo "Debug: Incremented total_files to $total_files"
+        fi
         echo
 
         # Debug: Show which file is being processed
