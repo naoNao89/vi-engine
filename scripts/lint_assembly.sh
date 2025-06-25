@@ -213,13 +213,19 @@ lint_x86_64() {
     fi
 
     # Method 3: Use nasm if available (alternative x86_64 assembler)
+    # Skip NASM for files that use # comments (NASM uses ; for comments)
     if command_exists nasm; then
-        log "Using NASM assembler"
-        if nasm -f macho64 "$file" -o "$temp_obj" 2>&1; then
-            echo -e "${GREEN}✓${NC} NASM assembler: PASS"
+        if grep -q "^#" "$file"; then
+            log "Skipping NASM assembler (file uses # comments, NASM requires ; comments)"
+            echo -e "${YELLOW}⚠${NC} NASM assembler: SKIPPED (incompatible comment syntax)"
         else
-            echo -e "${RED}✗${NC} NASM assembler: FAIL"
-            return 1
+            log "Using NASM assembler"
+            if nasm -f macho64 "$file" -o "$temp_obj" 2>&1; then
+                echo -e "${GREEN}✓${NC} NASM assembler: PASS"
+            else
+                echo -e "${RED}✗${NC} NASM assembler: FAIL"
+                return 1
+            fi
         fi
     fi
 
