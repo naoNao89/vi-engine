@@ -240,6 +240,14 @@ fn compile_x86_64_assembly() {
         return;
     }
 
+    // Temporarily disable assembly on Linux due to runtime segfault issues
+    // The assembly compiles correctly but has runtime memory safety issues on Linux
+    if target_os == "linux" {
+        println!("cargo:warning=Assembly compilation temporarily disabled on Linux due to runtime issues");
+        println!("cargo:rustc-cfg=feature=\"no_assembly\"");
+        return;
+    }
+
     if Path::new(asm_file).exists() {
         println!("cargo:rerun-if-changed={asm_file}");
 
