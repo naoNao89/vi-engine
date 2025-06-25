@@ -225,6 +225,12 @@ fn test_performance_monitoring() -> Result<(), AssemblyError> {
 
 #[test]
 fn test_error_handling() -> Result<(), AssemblyError> {
+    // Reset global assembly control state to prevent test contamination
+    {
+        use vi::safety::GLOBAL_ASSEMBLY_CONTROL;
+        GLOBAL_ASSEMBLY_CONTROL.reset_for_operation(1000);
+    }
+
     let mut processor = ProcessorBuilder::new()
         .with_fallback(true)
         .with_max_retries(1)
