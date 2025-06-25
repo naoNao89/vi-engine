@@ -32,9 +32,13 @@ fn u128_to_f64(value: u128) -> f64 {
 /// Performance test configuration
 #[derive(Debug, Clone)]
 pub struct PerfTestConfig {
+    /// Number of test iterations to run
     pub iterations: usize,
+    /// Number of warmup iterations before measurement
     pub warmup_iterations: usize,
+    /// Size of input data for testing
     pub input_size: usize,
+    /// Whether to measure FFI overhead
     pub measure_ffi_overhead: bool,
 }
 
@@ -52,11 +56,17 @@ impl Default for PerfTestConfig {
 /// Performance measurement results
 #[derive(Debug, Clone)]
 pub struct PerfResults {
+    /// Characters processed per second
     pub chars_per_second: f64,
+    /// Average latency in nanoseconds
     pub avg_latency_ns: f64,
+    /// Minimum latency in nanoseconds
     pub min_latency_ns: f64,
+    /// Maximum latency in nanoseconds
     pub max_latency_ns: f64,
+    /// FFI overhead in nanoseconds (if measured)
     pub ffi_overhead_ns: Option<f64>,
+    /// Number of memory allocations
     pub memory_allocations: usize,
 }
 

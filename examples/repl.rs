@@ -1,3 +1,7 @@
+//! Interactive REPL for testing Vietnamese input transformations
+//!
+//! This example provides a Read-Eval-Print Loop for testing Vietnamese input methods.
+
 use rustyline::DefaultEditor;
 
 // A REPL for testing transformation result.

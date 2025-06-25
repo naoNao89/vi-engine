@@ -1,3 +1,7 @@
+//! Tests for TELEX Vietnamese input method
+//!
+//! This module contains snapshot tests for the TELEX input method processing.
+
 mod shared;
 
 fn snapshot_transform(lines: &str) -> String {
