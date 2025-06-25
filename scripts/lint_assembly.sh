@@ -307,8 +307,8 @@ main() {
     # Debug: Add verbose error handling for Ubuntu
     if [[ "$OSTYPE" != "darwin"* ]]; then
         echo "Debug: Starting main function on Ubuntu..."
-        set -e  # Exit on any error
-        set -x  # Print commands as they execute (for debugging)
+        # Don't use set -e as it exits immediately on any error
+        # set -x  # Print commands as they execute (for debugging)
     fi
     
     # Check if assembly directory exists
@@ -325,13 +325,27 @@ main() {
         
         ((total_files++))
         echo
-        
+
+        # Debug: Show which file is being processed
+        if [[ "$OSTYPE" != "darwin"* ]]; then
+            echo "Debug: Processing file: $file"
+        fi
+
         # Determine architecture and lint accordingly
         if [[ "$file" == *"aarch64"* ]] || [[ "$file" == *"arm64"* ]]; then
+            if [[ "$OSTYPE" != "darwin"* ]]; then
+                echo "Debug: Detected ARM64 file, calling lint_arm64..."
+            fi
             if lint_arm64 "$file"; then
                 ((passed_files++))
+                if [[ "$OSTYPE" != "darwin"* ]]; then
+                    echo "Debug: ARM64 linting passed"
+                fi
             else
                 exit_code=1
+                if [[ "$OSTYPE" != "darwin"* ]]; then
+                    echo "Debug: ARM64 linting failed"
+                fi
             fi
         elif [[ "$file" == *"x86_64"* ]]; then
             if lint_x86_64 "$file"; then
