@@ -49,6 +49,20 @@ echo -e "${BLUE}=== Assembly Linting for vi-engine ===${NC}"
 echo "Linting directory: $ASM_DIR"
 echo
 
+# Debug: Check available tools on Ubuntu
+if [[ "$OSTYPE" != "darwin"* ]]; then
+    echo "Debug: Checking available LLVM tools on Ubuntu..."
+    echo "OSTYPE: $OSTYPE"
+    echo "Available llvm commands:"
+    ls /usr/bin/llvm* 2>/dev/null || echo "No llvm commands found in /usr/bin/"
+    echo "Available clang commands:"
+    ls /usr/bin/clang* 2>/dev/null || echo "No clang commands found in /usr/bin/"
+    echo "PATH: $PATH"
+    echo "which llvm-mc: $(which llvm-mc 2>/dev/null || echo 'not found')"
+    echo "which clang: $(which clang 2>/dev/null || echo 'not found')"
+    echo
+fi
+
 # Function to log messages
 log() {
     if [[ "$VERBOSE" == true ]]; then
