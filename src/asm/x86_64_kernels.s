@@ -934,7 +934,7 @@ hybrid_clean_chars_bulk_x86_64_safe:
     jae .bulk_safe_done
 
     # Safety checks every 1024 iterations
-    SAFETY_CHECK r15, r9, r8
+    SAFETY_CHECK r15, rax, r8
     ITERATION_GUARD r15, r8
 
     # Load and process character
