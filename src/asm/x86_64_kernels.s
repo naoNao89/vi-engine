@@ -21,7 +21,7 @@
 .text
 
 # Security and monitoring constants
-.section __DATA,__const
+.section .rodata
 .p2align 6
 
 # Stack canary values for protection
@@ -187,7 +187,7 @@ sidechannel_protection:
 .global system_integrity_monitor
 
 # Vietnamese character mapping constants
-.section __DATA,__const
+.section .rodata
 .p2align 6
 
 # Complete Vietnamese character lookup table (cache-line aligned)
