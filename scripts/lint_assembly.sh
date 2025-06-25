@@ -307,14 +307,23 @@ main() {
     # Debug: Add verbose error handling for Ubuntu
     if [[ "$OSTYPE" != "darwin"* ]]; then
         echo "Debug: Starting main function on Ubuntu..."
+        echo "Debug: ASM_DIR = $ASM_DIR"
+        echo "Debug: Checking if directory exists..."
         # Don't use set -e as it exits immediately on any error
         # set -x  # Print commands as they execute (for debugging)
     fi
-    
+
     # Check if assembly directory exists
     if [[ ! -d "$ASM_DIR" ]]; then
         echo -e "${RED}Error:${NC} Assembly directory '$ASM_DIR' not found"
+        if [[ "$OSTYPE" != "darwin"* ]]; then
+            echo "Debug: Directory check failed, exiting..."
+        fi
         exit 1
+    fi
+
+    if [[ "$OSTYPE" != "darwin"* ]]; then
+        echo "Debug: Directory exists, continuing..."
     fi
     
     # Lint each assembly file
