@@ -464,8 +464,15 @@ fn test_watchdog_stall_detection() {
         println!("This is acceptable as the watchdog is primarily for production safety");
 
         // Instead of failing, we'll verify the watchdog infrastructure is at least set up
-        assert!(control.start_time.load(Ordering::Relaxed) > 0, "Operation should be marked as started");
-        assert_eq!(control.heartbeat.load(Ordering::Relaxed), 1, "Heartbeat should be set");
+        assert!(
+            control.start_time.load(Ordering::Relaxed) > 0,
+            "Operation should be marked as started"
+        );
+        assert_eq!(
+            control.heartbeat.load(Ordering::Relaxed),
+            1,
+            "Heartbeat should be set"
+        );
     } else {
         println!("✅ Watchdog successfully detected stall and set cancel flag");
     }
