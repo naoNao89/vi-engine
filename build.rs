@@ -173,8 +173,15 @@ fn configure_auto_assembly(target_arch: &str, target_os: &str) {
                 println!("cargo:warning=Auto-enabled generic ARM64 assembly optimizations");
             }
         }
+        ("x86_64", "linux") => {
+            // x86_64 on Linux - temporarily disabled due to runtime segfault issues
+            println!("cargo:rustc-cfg=feature=\"no_assembly\"");
+            if env::var("VI_BUILD_VERBOSE").is_ok() || env::var("CARGO_VERBOSE").is_ok() {
+                println!("cargo:warning=x86_64 assembly temporarily disabled on Linux due to runtime issues");
+            }
+        }
         ("x86_64", _) => {
-            // x86_64 on any OS
+            // x86_64 on other OS (macOS, Windows, etc.)
             println!("cargo:rustc-cfg=feature=\"x86_64_assembly\"");
             if env::var("VI_BUILD_VERBOSE").is_ok() || env::var("CARGO_VERBOSE").is_ok() {
                 println!("cargo:warning=Auto-enabled x86_64 assembly optimizations");
