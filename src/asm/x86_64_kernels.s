@@ -128,7 +128,8 @@ sidechannel_protection:
 # x86_64 Safety Check Macros
 .macro SAFETY_CHECK control_ptr, temp_reg, iteration_reg
     # Check every 1024 iterations for minimal overhead
-    and \temp_reg, \iteration_reg, 0x3FF
+    mov \temp_reg, \iteration_reg
+    and \temp_reg, 0x3FF
     jnz 1f
 
     # Load cancel flag (first byte of AssemblyControl)
