@@ -5,7 +5,7 @@
 //! to debug the linking issue.
 
 // Link the static library directly
-#[cfg(feature = "apple_silicon_assembly")]
+#[cfg(all(feature = "apple_silicon_assembly", not(feature = "no_assembly")))]
 #[link(name = "apple_silicon_kernels", kind = "static")]
 extern "C" {
     fn apple_hybrid_clean_char_optimized(ch: u32) -> u32;
@@ -14,7 +14,7 @@ extern "C" {
 fn main() {
     println!("=== Direct Assembly Test ===");
 
-    #[cfg(feature = "apple_silicon_assembly")]
+    #[cfg(all(feature = "apple_silicon_assembly", not(feature = "no_assembly")))]
     {
         println!("Apple Silicon assembly feature is enabled");
 
