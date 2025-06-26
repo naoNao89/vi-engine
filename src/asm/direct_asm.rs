@@ -110,29 +110,37 @@ impl AssemblyPlatform {
     /// Detect the best available assembly platform
     #[must_use]
     pub fn detect() -> Self {
-        #[cfg(feature = "apple_silicon_assembly")]
-        {
-            Self::AppleSilicon
-        }
-        #[cfg(all(feature = "x86_64_assembly", not(feature = "apple_silicon_assembly")))]
-        {
-            Self::X86_64
-        }
-        #[cfg(all(
-            feature = "aarch64_assembly",
-            not(feature = "apple_silicon_assembly"),
-            not(feature = "x86_64_assembly")
-        ))]
-        {
-            Self::GenericARM64
-        }
-        #[cfg(not(any(
-            feature = "apple_silicon_assembly",
-            feature = "x86_64_assembly",
-            feature = "aarch64_assembly"
-        )))]
+        // If assembly is explicitly disabled, always use Rust fallback
+        #[cfg(feature = "no_assembly")]
         {
             Self::RustFallback
+        }
+        #[cfg(not(feature = "no_assembly"))]
+        {
+            #[cfg(feature = "apple_silicon_assembly")]
+            {
+                Self::AppleSilicon
+            }
+            #[cfg(all(feature = "x86_64_assembly", not(feature = "apple_silicon_assembly")))]
+            {
+                Self::X86_64
+            }
+            #[cfg(all(
+                feature = "aarch64_assembly",
+                not(feature = "apple_silicon_assembly"),
+                not(feature = "x86_64_assembly")
+            ))]
+            {
+                Self::GenericARM64
+            }
+            #[cfg(not(any(
+                feature = "apple_silicon_assembly",
+                feature = "x86_64_assembly",
+                feature = "aarch64_assembly"
+            )))]
+            {
+                Self::RustFallback
+            }
         }
     }
 
