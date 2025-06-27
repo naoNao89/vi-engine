@@ -4,7 +4,7 @@
 //! This example tests the bulk processing function to debug the issue.
 
 // Link the static library directly
-#[cfg(feature = "apple_silicon_assembly")]
+#[cfg(all(feature = "apple_silicon_assembly", not(feature = "no_assembly")))]
 #[link(name = "apple_silicon_kernels", kind = "static")]
 extern "C" {
     fn apple_hybrid_clean_chars_bulk_neon_optimized(
@@ -17,7 +17,7 @@ extern "C" {
 fn main() {
     println!("=== Bulk Processing Debug Test ===");
 
-    #[cfg(feature = "apple_silicon_assembly")]
+    #[cfg(all(feature = "apple_silicon_assembly", not(feature = "no_assembly")))]
     {
         println!("Apple Silicon assembly feature is enabled");
 

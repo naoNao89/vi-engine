@@ -1,3 +1,7 @@
+//! Example demonstrating old-style Vietnamese accent processing
+//!
+//! This example shows how to process Vietnamese text with old-style accent placement.
+
 fn main() {
     let inputs = "ra tajp hoas nhaf baf thuyr mua hoa hoef";
 

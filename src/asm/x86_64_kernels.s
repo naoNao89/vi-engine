@@ -21,7 +21,12 @@
 .text
 
 # Security and monitoring constants
-.section __DATA,__const
+# Cross-platform section definition for read-only data
+#ifdef __APPLE__
+.section __TEXT,__const
+#else
+.section .rodata
+#endif
 .p2align 6
 
 # Stack canary values for protection
@@ -123,7 +128,8 @@ sidechannel_protection:
 # x86_64 Safety Check Macros
 .macro SAFETY_CHECK control_ptr, temp_reg, iteration_reg
     # Check every 1024 iterations for minimal overhead
-    and \temp_reg, \iteration_reg, 0x3FF
+    mov \temp_reg, \iteration_reg
+    and \temp_reg, 0x3FF
     jnz 1f
 
     # Load cancel flag (first byte of AssemblyControl)
@@ -187,7 +193,12 @@ sidechannel_protection:
 .global system_integrity_monitor
 
 # Vietnamese character mapping constants
-.section __DATA,__const
+# Cross-platform section definition for read-only data
+#ifdef __APPLE__
+.section __TEXT,__const
+#else
+.section .rodata
+#endif
 .p2align 6
 
 # Complete Vietnamese character lookup table (cache-line aligned)
@@ -924,7 +935,7 @@ hybrid_clean_chars_bulk_x86_64_safe:
     jae .bulk_safe_done
 
     # Safety checks every 1024 iterations
-    SAFETY_CHECK r15, r9, r8
+    SAFETY_CHECK r15, rax, r8
     ITERATION_GUARD r15, r8
 
     # Load and process character

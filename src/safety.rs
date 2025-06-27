@@ -12,10 +12,17 @@
 //! - Performance monitoring with minimal overhead
 
 use once_cell::sync::Lazy;
+#[cfg(unix)]
 use signal_hook::{
-    consts::{SIGINT, SIGQUIT, SIGTERM},
+    consts::{SIGINT, SIGTERM},
     iterator::Signals,
 };
+
+#[cfg(unix)]
+use signal_hook::consts::SIGQUIT;
+
+#[cfg(windows)]
+use signal_hook::consts::{SIGINT, SIGTERM};
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -519,6 +526,7 @@ fn setup_panic_hook() {
 }
 
 /// Setup signal handling for graceful shutdown
+#[cfg(unix)]
 fn setup_signal_handling() -> Result<(), Box<dyn std::error::Error>> {
     // Skip signal handling in test environments to prevent thread exhaustion
     if cfg!(test) {
@@ -548,6 +556,54 @@ fn setup_signal_handling() -> Result<(), Box<dyn std::error::Error>> {
                         _ => unreachable!(),
                     }
                 }
+            }
+        }) {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            log::warn!("Failed to spawn signal handler thread: {e}. Signal handling disabled.");
+            Ok(()) // Don't fail initialization if signal handling can't be set up
+        }
+    }
+}
+
+/// Setup signal handling for graceful shutdown (Windows version)
+#[cfg(windows)]
+fn setup_signal_handling() -> Result<(), Box<dyn std::error::Error>> {
+    // Skip signal handling in test environments to prevent thread exhaustion
+    if cfg!(test) {
+        log::debug!("Skipping signal handling setup in test environment");
+        return Ok(());
+    }
+
+    // On Windows, signal handling is more limited
+    // We'll use a simpler approach with signal_hook::flag
+    use signal_hook::flag;
+    use std::sync::atomic::AtomicBool;
+
+    static TERM_FLAG: AtomicBool = AtomicBool::new(false);
+
+    // Register signal handlers
+    flag::register(SIGINT, &TERM_FLAG)?;
+    flag::register(SIGTERM, &TERM_FLAG)?;
+
+    // Use thread builder with error handling
+    match std::thread::Builder::new()
+        .name("signal-handler".to_string())
+        .spawn(move || {
+            loop {
+                if TERM_FLAG.load(Ordering::Relaxed) {
+                    log::warn!("Received termination signal, stopping assembly operations");
+                    GLOBAL_ASSEMBLY_CONTROL
+                        .cancel_flag
+                        .store(true, Ordering::SeqCst);
+
+                    // Give assembly time to stop gracefully
+                    std::thread::sleep(Duration::from_millis(100));
+                    std::process::exit(1);
+                }
+
+                // Check every 100ms
+                std::thread::sleep(Duration::from_millis(100));
             }
         }) {
         Ok(_) => Ok(()),

@@ -45,16 +45,28 @@ fn test_assembly_availability() {
     println!("Assembly Info: {}", get_assembly_info());
     println!("Assembly Available: {}", is_assembly_available());
 
-    // Assembly should be available on supported platforms
-    #[cfg(any(
-        feature = "apple_silicon_assembly",
-        feature = "x86_64_assembly",
-        feature = "aarch64_assembly"
+    // Assembly should be available on supported platforms, unless explicitly disabled
+    #[cfg(all(
+        any(
+            feature = "apple_silicon_assembly",
+            feature = "x86_64_assembly",
+            feature = "aarch64_assembly"
+        ),
+        not(feature = "no_assembly")
     ))]
     {
         assert!(
             is_assembly_available(),
-            "Assembly should be available on supported platforms"
+            "Assembly should be available on supported platforms when not explicitly disabled"
+        );
+    }
+
+    // When no_assembly is enabled, assembly should not be available
+    #[cfg(feature = "no_assembly")]
+    {
+        assert!(
+            !is_assembly_available(),
+            "Assembly should not be available when no_assembly feature is enabled"
         );
     }
 }

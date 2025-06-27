@@ -1,3 +1,7 @@
+//! Shared utilities for Vietnamese input method tests
+//!
+//! This module provides common functionality used across multiple test modules.
+
 use serde::Serialize;
 use std::fmt::Write;
 
@@ -8,6 +12,7 @@ pub(crate) struct Metadata<'a> {
 }
 
 #[macro_export]
+/// Macro for generating test cases from input/output file pairs
 macro_rules! gen_test {
     ($test_method:ident, $name:tt, $path: tt) => {
         #[test]
@@ -23,6 +28,7 @@ macro_rules! gen_test {
     };
 }
 
+/// Transform lines of text using the provided transformer function
 pub fn transform_lines<F>(input: &str, transformer: F) -> String
 where
     F: Fn(&'_ str) -> String,

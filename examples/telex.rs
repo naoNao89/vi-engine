@@ -1,3 +1,7 @@
+//! Example demonstrating TELEX input method processing
+//!
+//! This example shows how to process Vietnamese text using the TELEX input method.
+
 fn main() {
     let inputs = "hoiwx anh tifnh yeue gioosng nhuw cais cheets nuotos trooi taats car";
 

@@ -1,3 +1,7 @@
+//! Example demonstrating processing of longer Vietnamese text
+//!
+//! This example shows how to process longer Vietnamese text using the VNI input method.
+
 use vi::{transform_buffer, VNI};
 
 fn main() {

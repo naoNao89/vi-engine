@@ -10,7 +10,7 @@ use crate::safety::{AssemblyControl, AssemblyError};
 // These functions are compiled and linked by build.rs
 
 // Apple Silicon optimized functions
-#[cfg(feature = "apple_silicon_assembly")]
+#[cfg(all(feature = "apple_silicon_assembly", not(feature = "no_assembly")))]
 extern "C" {
     /// Process single character with Apple Silicon optimizations
     ///
@@ -28,7 +28,7 @@ extern "C" {
 }
 
 // x86_64 optimized functions
-#[cfg(feature = "x86_64_assembly")]
+#[cfg(all(feature = "x86_64_assembly", not(feature = "no_assembly")))]
 extern "C" {
     /// Process single character with `x86_64` optimizations
     #[cfg(target_arch = "x86_64")]
@@ -74,7 +74,7 @@ extern "C" {
 }
 
 // Generic ARM64 functions
-#[cfg(feature = "aarch64_assembly")]
+#[cfg(all(feature = "aarch64_assembly", not(feature = "no_assembly")))]
 extern "C" {
     /// Process single character with generic ARM64 instructions
     #[cfg(target_arch = "x86_64")]
@@ -110,29 +110,37 @@ impl AssemblyPlatform {
     /// Detect the best available assembly platform
     #[must_use]
     pub fn detect() -> Self {
-        #[cfg(feature = "apple_silicon_assembly")]
-        {
-            Self::AppleSilicon
-        }
-        #[cfg(all(feature = "x86_64_assembly", not(feature = "apple_silicon_assembly")))]
-        {
-            Self::X86_64
-        }
-        #[cfg(all(
-            feature = "aarch64_assembly",
-            not(feature = "apple_silicon_assembly"),
-            not(feature = "x86_64_assembly")
-        ))]
-        {
-            Self::GenericARM64
-        }
-        #[cfg(not(any(
-            feature = "apple_silicon_assembly",
-            feature = "x86_64_assembly",
-            feature = "aarch64_assembly"
-        )))]
+        // If assembly is explicitly disabled, always use Rust fallback
+        #[cfg(feature = "no_assembly")]
         {
             Self::RustFallback
+        }
+        #[cfg(not(feature = "no_assembly"))]
+        {
+            #[cfg(feature = "apple_silicon_assembly")]
+            {
+                Self::AppleSilicon
+            }
+            #[cfg(all(feature = "x86_64_assembly", not(feature = "apple_silicon_assembly")))]
+            {
+                Self::X86_64
+            }
+            #[cfg(all(
+                feature = "aarch64_assembly",
+                not(feature = "apple_silicon_assembly"),
+                not(feature = "x86_64_assembly")
+            ))]
+            {
+                Self::GenericARM64
+            }
+            #[cfg(not(any(
+                feature = "apple_silicon_assembly",
+                feature = "x86_64_assembly",
+                feature = "aarch64_assembly"
+            )))]
+            {
+                Self::RustFallback
+            }
         }
     }
 
@@ -194,7 +202,7 @@ impl AssemblyInterface {
 
         match self.platform {
             AssemblyPlatform::AppleSilicon => {
-                #[cfg(feature = "apple_silicon_assembly")]
+                #[cfg(all(feature = "apple_silicon_assembly", not(feature = "no_assembly")))]
                 {
                     // SAFETY: ch_u32 is validated to be ≤ 0x10FFFF above, making it a valid Unicode codepoint.
                     // The assembly function is stateless and thread-safe.
@@ -211,11 +219,11 @@ impl AssemblyInterface {
                         ))
                     })
                 }
-                #[cfg(not(feature = "apple_silicon_assembly"))]
+                #[cfg(not(all(feature = "apple_silicon_assembly", not(feature = "no_assembly"))))]
                 self.process_char_rust_fallback(ch)
             }
             AssemblyPlatform::X86_64 => {
-                #[cfg(feature = "x86_64_assembly")]
+                #[cfg(all(feature = "x86_64_assembly", not(feature = "no_assembly")))]
                 {
                     // SAFETY: ch_u32 is validated to be ≤ 0x10FFFF above, making it a valid Unicode codepoint.
                     // The assembly function is stateless and thread-safe.
@@ -232,11 +240,11 @@ impl AssemblyInterface {
                         ))
                     })
                 }
-                #[cfg(not(feature = "x86_64_assembly"))]
+                #[cfg(not(all(feature = "x86_64_assembly", not(feature = "no_assembly"))))]
                 self.process_char_rust_fallback(ch)
             }
             AssemblyPlatform::GenericARM64 => {
-                #[cfg(feature = "aarch64_assembly")]
+                #[cfg(all(feature = "aarch64_assembly", not(feature = "no_assembly")))]
                 {
                     // SAFETY: ch_u32 is validated to be ≤ 0x10FFFF above, making it a valid Unicode codepoint.
                     // The assembly function is stateless and thread-safe.
@@ -253,7 +261,7 @@ impl AssemblyInterface {
                         ))
                     })
                 }
-                #[cfg(not(feature = "aarch64_assembly"))]
+                #[cfg(not(all(feature = "aarch64_assembly", not(feature = "no_assembly"))))]
                 self.process_char_rust_fallback(ch)
             }
             AssemblyPlatform::RustFallback => self.process_char_rust_fallback(ch),
@@ -285,7 +293,7 @@ impl AssemblyInterface {
 
         match self.platform {
             AssemblyPlatform::AppleSilicon => {
-                #[cfg(feature = "apple_silicon_assembly")]
+                #[cfg(all(feature = "apple_silicon_assembly", not(feature = "no_assembly")))]
                 {
                     // WORKAROUND: The bulk assembly function has a bug causing segfaults
                     // Use character-by-character processing with the working single-char function
@@ -317,11 +325,11 @@ impl AssemblyInterface {
 
                     Ok(processed)
                 }
-                #[cfg(not(feature = "apple_silicon_assembly"))]
+                #[cfg(not(all(feature = "apple_silicon_assembly", not(feature = "no_assembly"))))]
                 self.process_chars_rust_fallback(input, output)
             }
             AssemblyPlatform::X86_64 => {
-                #[cfg(feature = "x86_64_assembly")]
+                #[cfg(all(feature = "x86_64_assembly", not(feature = "no_assembly")))]
                 {
                     // SAFETY:
                     // - input and output slices have been validated to have equal length above
@@ -361,11 +369,13 @@ impl AssemblyInterface {
 
                     Ok(processed)
                 }
-                #[cfg(not(feature = "x86_64_assembly"))]
-                self.process_chars_rust_fallback(input, output)
+                #[cfg(not(all(feature = "x86_64_assembly", not(feature = "no_assembly"))))]
+                {
+                    self.process_chars_rust_fallback(input, output)
+                }
             }
             AssemblyPlatform::GenericARM64 => {
-                #[cfg(feature = "aarch64_assembly")]
+                #[cfg(all(feature = "aarch64_assembly", not(feature = "no_assembly")))]
                 {
                     // Generic ARM64 doesn't have safety-aware bulk processing
                     // Use the available bulk function with periodic safety checks
@@ -421,7 +431,7 @@ impl AssemblyInterface {
 
                     Ok(processed)
                 }
-                #[cfg(not(feature = "aarch64_assembly"))]
+                #[cfg(not(all(feature = "aarch64_assembly", not(feature = "no_assembly"))))]
                 self.process_chars_rust_fallback(input, output)
             }
             AssemblyPlatform::RustFallback => self.process_chars_rust_fallback(input, output),
@@ -479,7 +489,7 @@ pub fn process_char_unsafe(ch: char) -> char {
     // Direct assembly call without safety overhead
     match AssemblyPlatform::detect() {
         AssemblyPlatform::AppleSilicon => {
-            #[cfg(feature = "apple_silicon_assembly")]
+            #[cfg(all(feature = "apple_silicon_assembly", not(feature = "no_assembly")))]
             {
                 // Direct Apple Silicon assembly call
                 #[cfg(target_arch = "x86_64")]
@@ -490,11 +500,11 @@ pub fn process_char_unsafe(ch: char) -> char {
 
                 char::from_u32(result).unwrap_or(ch)
             }
-            #[cfg(not(feature = "apple_silicon_assembly"))]
+            #[cfg(not(all(feature = "apple_silicon_assembly", not(feature = "no_assembly"))))]
             crate::util::clean_char(ch)
         }
         AssemblyPlatform::X86_64 => {
-            #[cfg(feature = "x86_64_assembly")]
+            #[cfg(all(feature = "x86_64_assembly", not(feature = "no_assembly")))]
             {
                 // Direct x86_64 assembly call
                 #[cfg(target_arch = "x86_64")]
@@ -505,11 +515,11 @@ pub fn process_char_unsafe(ch: char) -> char {
 
                 char::from_u32(result).unwrap_or(ch)
             }
-            #[cfg(not(feature = "x86_64_assembly"))]
+            #[cfg(not(all(feature = "x86_64_assembly", not(feature = "no_assembly"))))]
             crate::util::clean_char(ch)
         }
         AssemblyPlatform::GenericARM64 => {
-            #[cfg(feature = "aarch64_assembly")]
+            #[cfg(all(feature = "aarch64_assembly", not(feature = "no_assembly")))]
             {
                 // Direct ARM64 assembly call
                 #[cfg(target_arch = "x86_64")]
@@ -520,7 +530,7 @@ pub fn process_char_unsafe(ch: char) -> char {
 
                 char::from_u32(result).unwrap_or(ch)
             }
-            #[cfg(not(feature = "aarch64_assembly"))]
+            #[cfg(not(all(feature = "aarch64_assembly", not(feature = "no_assembly"))))]
             crate::util::clean_char(ch)
         }
         AssemblyPlatform::RustFallback => {
